@@ -5,6 +5,7 @@ import pickle
 from collections import namedtuple
 
 import geoip2.database
+root_path = Path(__file__).parent.parent.parent
 
 MaxmindLocation = namedtuple('MaxmindLocation', ['city', 'subdivisions', 'country', 'accuracy_radius', 'latitude', 'longitude', 'autonomous_system_number', 'network'])
 
@@ -89,9 +90,6 @@ def load_maxmind_output(ip_version=4, tags='default', ips_list=[]):
 if __name__ == '__main__':
 
 	# sample_ips_list = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
-
-	root_path = Path(__file__).parent.parent.parent
-
 	ip_version = 4
 
 	with open(root_path / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:

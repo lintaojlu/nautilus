@@ -1,5 +1,7 @@
 import csv, pickle
-from pathlib import Path 
+from pathlib import Path
+
+root_path = Path(__file__).parent.parent.parent
 
 def save_ripe_location_output(ripe_location, ip_version = 4, tags='default'):
 
@@ -85,8 +87,6 @@ def load_ripe_geolocation_output (ip_version=4, tags='default', ips_list=[]):
 
 
 if __name__ == '__main__':
-
-	root_path = Path(__file__).parent.parent.parent
 
 	#sample_ips_list = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
 

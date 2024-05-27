@@ -28,6 +28,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, NoSuchElementException, \
     InvalidSelectorException
 
+root_dir = Path(__file__).resolve().parents[2]
+
 Location = namedtuple('Location', ['city', 'subdivisions', 'country', 'accuracy_radius', 'latitude', 'longitude',
                                    'autonomous_system_number', 'network', 'ISP', 'Org'])
 
@@ -377,8 +379,6 @@ def generate_location_for_list_of_ips(list_of_ips=[], in_chunks=False, args=None
 
 
 if __name__ == '__main__':
-    root_dir = Path(__file__).resolve().parents[2]
-
     mode = 1
     args = {}
     list_of_ips = []
