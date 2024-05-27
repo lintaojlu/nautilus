@@ -1,3 +1,4 @@
+import json
 import os, sys
 from pathlib import Path
 
@@ -11,8 +12,10 @@ from collections import namedtuple
 
 from ipaddress import ip_network, ip_address
 
+from tqdm import tqdm
+
 root_dir = Path(__file__).resolve().parents[2]
-# sys.path.insert(1, str(root_dir))
+sys.path.insert(0, str(root_dir))
 
 TraceRoute = namedtuple('TraceRoute', ['hops', 'other_info'])
 
@@ -22,8 +25,8 @@ private_ranges = [ip_network("192.168.0.0/16"), ip_network("10.0.0.0/8"), ip_net
 
 private_ranges_v6 = [ip_network("fc00::/7"), ip_network("fc00::/8"), ip_network("fd00::/8")]
 
-from ripe_probe_location_info import load_probe_location_result
-from geolocation_latency_based_validation_common_utils import load_all_geolocation_info, \
+from code.traceroute.ripe_probe_location_info import load_probe_location_result
+from code.traceroute.geolocation_latency_based_validation_common_utils import load_all_geolocation_info, \
     extract_latlon_and_perform_sol_test, fill_locations_dict_scores
 
 # Once location scripts are done, load directly from those
@@ -34,7 +37,7 @@ MaxmindLocation = namedtuple('MaxmindLocation',
                               'autonomous_system_number', 'network'])
 
 
-def download_data_from_ripe_atlas(start_time, end_time, msm_id, return_content=0):
+def download_data_from_ripe_atlas(start_time, end_time, msm_id):
     """
     This function essentially downloads the data from RIPE Atlas website and saves the
     result in the stats directory
@@ -43,8 +46,17 @@ def download_data_from_ripe_atlas(start_time, end_time, msm_id, return_content=0
         end_time -> The end time for the traceroutes to be collected (should be in datetime format)
         return_content -> By default 0, if set to 1, we return the last processed traceroutes
     """
+    save_directory = root_dir / 'stats' / 'ripe_data'
 
-    fixed_url = "atlas.ripe.net/api/v2/measurements/"
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory, exist_ok=True)
+
+    if start_time < datetime(2016, 5, 8, 0, 0, 0):
+        print(f"Traceroute data is before 2016-05-08")
+        return
+
+    file_name = 'raw_output_' + msm_id + '_' + start_time.strftime("%Y_%m_%d") + '_' + end_time.strftime("%Y_%m_%d") + '.txt'
+    file_path = save_directory / file_name
 
     start_time_int = int(calendar.timegm(start_time.timetuple()))
     # if end_time is end with 00:00:00, reduce 1 second
@@ -53,47 +65,48 @@ def download_data_from_ripe_atlas(start_time, end_time, msm_id, return_content=0
     else:
         end_time_int = int(calendar.timegm(end_time.timetuple()))
 
-    print(f"Downloading data from RIPE Atlas for [{start_time} to {datetime.fromtimestamp(end_time_int, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}]")
+    print(f'Downloading/Loading ripe {msm_id} traceroutes: start_time: {start_time}, end_time: {end_time}')
 
+    retries = 0
+    max_retries = 10
+    while retries < max_retries:
+        if os.path.isfile(file_path):
+            # Check last line of the file for valid JSON format
+            with open(file_path, 'r') as f:
+                try:
+                    last_line = f.readlines()[-1]
+                    json.loads(last_line)
+                    print(f"{start_time}'s traceroute file is complete")
+                    response_list = []
+                    with open(file_path, 'r') as fp:
+                        for line in fp:
+                            response_list.append(json.loads(line))
 
-    save_directory = root_dir / 'stats' / 'ripe_data'
+                    print("Finished processing all the traceroutes in the given data range.")
 
-    if not os.path.exists(save_directory):
-        os.makedirs(save_directory, exist_ok=True)
+                    return response_list, file_path
+                except Exception as e:
+                    print(f"{start_time}'s traceroute file is incomplete, retrying...")
+                    retries += 1
 
-    current_process_time = datetime.fromtimestamp(start_time_int, tz=timezone.utc).strftime("%m_%d_%Y_%H_%M")
+        url = f"https://atlas.ripe.net/api/v2/measurements/{msm_id}/results/?start={start_time_int}&stop={end_time_int}&format=txt"
+        print(f'url: {url}')
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:  # 200 OK
+            mode = 'wb'  # 写模式
+            with open(file_path, mode) as f:
+                try:
+                    for chunk in tqdm(response.iter_content(chunk_size=1024)):
+                        f.write(chunk)
+                    print(f"Downloaded {start_time}'s traceroute")
+                except Exception as e:
+                    retries += 1
+        else:
+            print(f"Failed, HTTP code: {response.status_code}")
+            retries += 1
 
-    file_name = 'raw_output_' + msm_id + '_' + current_process_time
-
-    if Path(save_directory / file_name).exists():
-
-        save_file = save_directory / file_name
-
-        with open(save_file, 'rb') as fp:
-            print('Directly loading contents from stored file')
-            response_list = pickle.load(fp)
-
-    else:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-        }
-        print(f"Currently processing traceroutes starting from {current_process_time}.")
-
-        url = "https://{0}{1}/results?start={2}&stop={3}".format(fixed_url, msm_id, start_time_int, end_time_int)
-        print(url)
-        response = requests.get(url, headers=headers)
-
-        response_list = response.json()
-
-        save_file = save_directory / file_name
-
-        with open(save_file, 'wb') as fp:
-            pickle.dump(response_list, fp, protocol=pickle.HIGHEST_PROTOCOL)
-
-        print("Finished processing all the traceroutes in the given data range.")
-
-    if return_content:
-        return (response_list, save_file)
+    if retries == max_retries:
+        print(f"Failed to download {start_time}'s traceroute after {max_retries} attempts")
 
 
 def process_transform_traceroute(traceroute_data, save_file, return_content=0):
@@ -327,8 +340,8 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
         print('Stage 1 : Loading/Downloading the data from RIPE Atlas')
         time_end = time + timedelta(hours=24)
-        # save_file is like raw_output_5051_current_process_time
-        traceroute_output, save_file = download_data_from_ripe_atlas(time, time_end, msm_id, 1)
+        # save_file is like raw_output_5051_current_date_label
+        traceroute_output, save_file = download_data_from_ripe_atlas(time, time_end, msm_id)
         print(f'Length of raw traceroutes is {len(traceroute_output)}')
 
         print('Stage 2 : Processing the data from RIPE Atlas')
@@ -400,14 +413,14 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
 
 if __name__ == '__main__':
-    start_time = datetime(2024, 5, 1, 0)
-    end_time = datetime(2024, 5, 2, 0)
+    s_time = datetime(2024, 5, 1, 0)
+    e_time = datetime(2024, 5, 1, 1)
 
     # The measurement ids used are 5051 and 5151 for v4 and 6052 and 6152 for v6
     # The number (6) in example below indicates the IP version, which will be according to the measurement IDs
     # That number is mostly used for just saving the results
 
-    result = ripe_process_traceroutes(start_time, end_time, '5051', 4, False)
+    result = ripe_process_traceroutes(s_time, e_time, '5051', 4, False)
     print(f'Result length is {len(result)}')
-    result = ripe_process_traceroutes(start_time, end_time, '5151', 4, False)
-    print(f'Result length is {len(result)}')
+    # result = ripe_process_traceroutes(s_time, e_time, '5151', 4, False)
+    # print(f'Result length is {len(result)}')
