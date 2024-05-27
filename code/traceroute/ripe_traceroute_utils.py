@@ -12,7 +12,7 @@ from collections import namedtuple
 from ipaddress import ip_network, ip_address
 
 root_dir = Path(__file__).resolve().parents[2]
-sys.path.insert(1, str(root_dir))
+# sys.path.insert(1, str(root_dir))
 
 TraceRoute = namedtuple('TraceRoute', ['hops', 'other_info'])
 
@@ -22,8 +22,8 @@ private_ranges = [ip_network("192.168.0.0/16"), ip_network("10.0.0.0/8"), ip_net
 
 private_ranges_v6 = [ip_network("fc00::/7"), ip_network("fc00::/8"), ip_network("fd00::/8")]
 
-from .ripe_probe_location_info import load_probe_location_result
-from .geolocation_latency_based_validation_common_utils import load_all_geolocation_info, \
+from ripe_probe_location_info import load_probe_location_result
+from geolocation_latency_based_validation_common_utils import load_all_geolocation_info, \
     extract_latlon_and_perform_sol_test, fill_locations_dict_scores
 
 # Once location scripts are done, load directly from those
@@ -52,6 +52,9 @@ def download_data_from_ripe_atlas(start_time, end_time, msm_id, return_content=0
         end_time_int = int(calendar.timegm(end_time.timetuple())) - 1
     else:
         end_time_int = int(calendar.timegm(end_time.timetuple()))
+
+    print(f"Downloading data from RIPE Atlas for [{start_time} to {datetime.fromtimestamp(end_time_int, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}]")
+
 
     save_directory = root_dir / 'stats' / 'ripe_data'
 
@@ -305,6 +308,7 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
         v4 = True
     else:
         v4 = False
+    print(f'Processing traceroutes for {msm_id} and IP version {ip_version}')
 
     if geolocation_validation:
         ip_location_with_penalty_and_total_count = {}
@@ -322,7 +326,7 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
     while time < end_time:
 
         print('Stage 1 : Loading/Downloading the data from RIPE Atlas')
-        time_end = time + timedelta(hours=2)
+        time_end = time + timedelta(hours=24)
         # save_file is like raw_output_5051_current_process_time
         traceroute_output, save_file = download_data_from_ripe_atlas(time, time_end, msm_id, 1)
         print(f'Length of raw traceroutes is {len(traceroute_output)}')
@@ -347,7 +351,8 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
             print(f'Lets save the current result')
 
-            with open(root_dir / 'stats/location_data/ripe_validated_ip_locations_v{}_{}'.format(ip_version, msm_id), 'wb') as fp:
+            with open(root_dir / 'stats/location_data/ripe_validated_ip_locations_v{}_{}'.format(ip_version, msm_id),
+                      'wb') as fp:
                 pickle.dump(ip_location_with_penalty_and_total_count, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
             print(f'Finished saving the results')
@@ -372,29 +377,24 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
         print(f'Current count is {count} and dictionary length is {len(d)}')
 
-        # Save the dictionary every 12 hours
-        if count % 6 == 0:
-            print(f'Writing to a file for count {count // 6}')
-            file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_' + str(count // 6)
-            save_file = parent_dir / file_name
-            with open(save_file, 'wb') as fp:
-                pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        # if count % 6 == 0:
+        #     print(f'Writing to a file for count {count // 6}')
+        #     file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_' + str(count // 6)
+        #     save_file = parent_dir / file_name
+        #     with open(save_file, 'wb') as fp:
+        #         pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
         count += 1
-
-        print()
-        print('*' * 50)
-        print()
 
     end_time_int = int(calendar.timegm(end_time.timetuple()))
     end_process_time = datetime.fromtimestamp(end_time_int, tz=timezone.utc).strftime("%m_%d_%Y_%H_%M")
 
-    print(f'Finishing things up, doing the last save')
     file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_{end_process_time}_count_' + str(
-        count // 6)
+        count)
     save_file = parent_dir / file_name
     with open(save_file, 'wb') as fp:
         pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    print(f'Saved the final result to {save_file}')
 
     return d
 
