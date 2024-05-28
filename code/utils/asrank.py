@@ -1,6 +1,7 @@
 #!  /usr/bin/env python3
 __author__ = "Bradley Huffaker"
 __email__ = "<bradley@caida.org>"
+
 # This software is Copyright (C) 2018 The Regents of the University of
 # California. All Rights Reserved. Permission to copy, modify, and
 # distribute this software and its documentation for educational, research
@@ -45,8 +46,8 @@ import argparse
 import sys
 import json
 import time
-#from gql import gql, Client
-#from gql.transport.requests import RequestsHTTPTransport
+# from gql import gql, Client
+# from gql.transport.requests import RequestsHTTPTransport
 from graphqlclient import GraphQLClient
 
 URL = "https://api.asrank.caida.org/v2/graphql"
@@ -55,34 +56,38 @@ PAGE_SIZE = 10000
 decoder = json.JSONDecoder()
 encoder = json.JSONEncoder()
 
-#method to print how to run script
+
+# method to print how to run script
 def print_help():
-    print (sys.argv[0],"-u as-rank.caida.org/api/v1")
-    
+    print(sys.argv[0], "-u as-rank.caida.org/api/v1")
+
+
 ######################################################################
 ## Parameters
 ######################################################################
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", dest="verbose", help="prints out lots of messages", action="store_true")
-parser.add_argument("-a", dest="asns", help="download asns", type=str) 
+parser.add_argument("-a", dest="asns", help="download asns", type=str)
 parser.add_argument("-o", dest="organizations", help="download organizations", type=str)
 parser.add_argument("-l", dest="asnLinks", help="download asn links", type=str)
 parser.add_argument("-q", dest="query", help="single query", type=str)
 parser.add_argument("-Q", dest="query", help="list query", type=str)
-parser.add_argument("-u", dest="url", help="API URL (https://api.asrank.caida.org/v2/graphiql)", type=str, default="https://api.asrank.caida.org/v2/graphql")
+parser.add_argument("-u", dest="url", help="API URL (https://api.asrank.caida.org/v2/graphiql)", type=str,
+                    default="https://api.asrank.caida.org/v2/graphql")
 parser.add_argument("-d", dest="debug_limit", help="sets the number to download", type=int)
 args = parser.parse_args()
+
 
 ######################################################################
 ## Main code
 ######################################################################
 def main():
     did_nothing = True
-    for fname,function in [
-            [args.asns, AsnsQuery], 
-            [args.organizations, OrganizationsQuery],
-            [args.asnLinks, AsnLinksQuery]
-            ]:
+    for fname, function in [
+        [args.asns, AsnsQuery],
+        [args.organizations, OrganizationsQuery],
+        [args.asnLinks, AsnLinksQuery]
+    ]:
 
         if fname:
             DownloadList(args.url, fname, function, args.debug_limit)
@@ -90,6 +95,7 @@ def main():
     if did_nothing:
         parser.print_help()
         sys.exit()
+
 
 ######################################################################
 ## Walks the list until it is empty
@@ -102,30 +108,31 @@ def DownloadList(url, fname, function, debug_limit):
     # Used by nested calls
 
     start = time.time()
-    print ("writting",fname)
-    with open(fname,"w") as f:
+    print("writting", fname)
+    with open(fname, "w") as f:
         while hasNextPage:
-            type,query = function(first, offset)
+            type, query = function(first, offset)
             if offset == 0 and args.verbose:
-                print (query)
+                print(query)
 
             data = DownloadQuery(url, query)
             if not ("data" in data and type in data["data"]):
-                print ("Failed to parse:",data,file=sys.stderr)
+                print("Failed to parse:", data, file=sys.stderr)
                 sys.exit()
             data = data["data"][type]
             for node in data["edges"]:
-                print (encoder.encode(node["node"]), file=f)
+                print(encoder.encode(node["node"]), file=f)
 
             hasNextPage = data["pageInfo"]["hasNextPage"]
             offset += data["pageInfo"]["first"]
 
             if args.verbose:
-                print ("    ",offset,"of",data["totalCount"], " ",time.time()-start,"(sec)",file=sys.stderr)
+                print("    ", offset, "of", data["totalCount"], " ", time.time() - start, "(sec)", file=sys.stderr)
                 start = time.time()
 
             if debug_limit and debug_limit < offset:
                 hasNextPage = False
+
 
 def DownloadQuery(url, query):
     client = GraphQLClient(url)
@@ -136,9 +143,9 @@ def DownloadQuery(url, query):
 ## Queries
 ######################################################################
 
-def AsnsQuery(first,offset):
+def AsnsQuery(first, offset):
     return [
-        "asns", 
+        "asns",
         """{
         asns(first:%s, offset:%s) {
             totalCount
@@ -186,6 +193,7 @@ def AsnsQuery(first,offset):
     }""" % (first, offset)
     ]
 
+
 def OrganizationsQuery(first, offset):
     return [
         "organizations",
@@ -226,8 +234,9 @@ def OrganizationsQuery(first, offset):
                 }
             }
         }
-    }""" % (first,offset)
+    }""" % (first, offset)
     ]
+
 
 def AsnLinksQuery(first, offset):
     return [
@@ -252,8 +261,9 @@ def AsnLinksQuery(first, offset):
                 }
             } 
         }
-    }"""  % (first, offset)
+    }""" % (first, offset)
     ]
 
-#run the main method
+
+# run the main method
 main()
