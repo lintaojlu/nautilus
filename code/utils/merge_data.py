@@ -1,11 +1,11 @@
+import os
 import pickle
+import sys
 from pathlib import Path
+
 import numpy as np
 
-import os, sys
 sys.path.insert(1, os.path.abspath('../../'))
-
-from code.location.ipgeolocation_utils import Location
 
 
 def check_file_presence(file_to_be_checked, list_of_files, keywords):

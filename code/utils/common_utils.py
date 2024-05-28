@@ -19,12 +19,13 @@ import math
 import numpy as np
 from itertools import product
 from haversine import haversine, Unit
+root_dir = Path(__file__).resolve().parents[2]
 
 Cable = namedtuple('Cable', ['name', 'landing_points', 'length', 'owners', 'notes', 'rfs', 'other_info'])
 
 
 def get_cable_details():
-    save_file = Path.cwd() / 'stats/submarine_data/cable_info_dict'
+    save_file = root_dir / 'stats/submarine_data/cable_info_dict'
 
     if Path(save_file).exists():
         with open(save_file, 'rb') as fp:
@@ -40,7 +41,7 @@ def get_future_cables(cable_dict):
 
 
 def get_submarine_owners():
-    save_file = Path.cwd() / 'stats/submarine_data/owners_dict'
+    save_file = root_dir / 'stats/submarine_data/owners_dict'
 
     if Path(save_file).exists():
         with open(save_file, 'rb') as fp:
@@ -146,7 +147,7 @@ def update_score_tuple(list_of_tuples_from_geolocation, owner_score_tuple):
 def generate_cable_mapping_for_given_category(category_links, latlon_cluster_and_score_map, category, tree,
                                               future_cables, closest_submarine_org, submarine_owners_dict, cable_dict,
                                               landing_points_dict, latlon_dict, latlons, save_file=None):
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     cable_mapping = {}
@@ -335,7 +336,7 @@ def generate_cable_mapping_test(mode=2, ip_version=4, sol_threshold=0.01, geoloc
 
 
 def get_load_all_cable_mapping_merged_output(mode=2, ip_version=4):
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
 
     categories = ['bg_oc', 'og_oc', 'bb_oc', 'bg_te', 'og_te', 'bb_te']
 
@@ -530,7 +531,7 @@ def generate_final_mapping_helper(cable_mapping, de_te_additions, cable_to_lp_id
 
 
 def generate_final_mapping(mode=2, ip_version=4, threshold=0.05):
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
 
     # Let's first load all the merged output for each category
     cable_mapping, cable_mapping_sol_validated = get_load_all_cable_mapping_merged_output(mode=mode,
@@ -575,7 +576,7 @@ def generate_final_mapping(mode=2, ip_version=4, threshold=0.05):
 
 
 def generate_final_mapping_test(cable_mapping, cable_mapping_sol_validated, mode=2, ip_version=4, threshold=0.05):
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
 
     # Loading the cable to connected landing points dict
     cable_to_lp_ids = load_cable_to_lp_ids()
@@ -631,7 +632,7 @@ def regenerate_categories_map_helper(categories_map, de_te_additions, ip_version
 
 
 def regenerate_categories_map(mode=2, ip_version=4):
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
 
     if mode in [0, 2]:
         with open(save_directory / 'categories_map_v{}'.format(ip_version), 'rb') as fp:

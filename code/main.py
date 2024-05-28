@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from traceroute import ripe_traceroute_utils
-from utils import traceroute_utils
+from utils import traceroute_utils, common_utils, geolocation_utils, merge_data
 from location import ripe_geolocation_utils, caida_geolocation_utils, maxmind_utils, ipgeolocation_utils
 from ip_to_as import whois_radb_utils, whois_rpki_utils, cymru_whois_utils, whois_itdk_utils
 
@@ -52,7 +52,12 @@ if __name__ == '__main__':
     print(f'Maxmind: Results for {len(maxmind_location)} IPs')
 
     print('4. IPGeolocation geolocation')
-    ipgeolocation_utils.generate_location_for_list_of_ips(sample_ips_list, in_chunks=False, args=args, len_single_file=4500)
+    ipgeolocation_utils.generate_location_for_list_of_ips(sample_ips_list, in_chunks=False, args=args,
+                                                          len_single_file=4500)
+
+    print('******* Merging the geolocation results *******')
+    merge_data.common_merge_operation('stats/location_data/iplocation_files', 2, [], ['ipgeolocation_file_'], True, f'iplocation_location_output_v{ip_version}_default')
+
 
     print('******* SoL validation *******')
     for msm_id in msm_ids:
@@ -72,14 +77,25 @@ if __name__ == '__main__':
     print(f'Cymru: Results for {len(cymru_output)} IPs')
 
     print('3. RPKI queries')
-    rpki_output = whois_rpki_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args, in_chunks=in_chunks)
+    rpki_output = whois_rpki_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
+                                                                  in_chunks=in_chunks)
     print(f'RPKI: Results for {len(rpki_output)} IPs')
 
     print('4. RADB queries')
-    radb_output = whois_radb_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args, in_chunks=in_chunks)
+    radb_output = whois_radb_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
+                                                                  in_chunks=in_chunks)
     print(f'RADB: Results for {len(radb_output)} IPs')
 
+    print('******* Nautilus Mapping *******')
+    # mode = 2：同时生成地理位置验证和 SoL 验证的电缆映射。
+    mode = 2
 
+    print("Generate an initial mapping for each category")
+    common_utils.generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05)
 
+    print("Generating a final mapping file for each category")
+    # merge_data.common_merge_operation('stats/mapping_outputs', 1, [], ['v4'], True, None)
 
-
+    print("Merging the results for all categories and re-updating the categories map")
+    common_utils.generate_final_mapping(mode=mode, ip_version=ip_version, threshold=0.05)
+    common_utils.regenerate_categories_map(mode=mode, ip_version=ip_version)
