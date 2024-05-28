@@ -8,8 +8,8 @@ from code.utils.merge_data import save_results_to_file
 root_dir = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root_dir))
 
-caida_directory = os.path.join(root_dir, 'stats/caida_data')
-ripe_directory = os.path.join(root_dir, 'stats/ripe_data')
+caida_directory = root_dir / 'stats/caida_data'
+ripe_directory = root_dir / 'stats/ripe_data'
 
 
 def merge_ab_and_ba_links(dictionary, codes=None, mode=0):

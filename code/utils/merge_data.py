@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(1, os.path.abspath('../../'))
+root_dir = Path(__file__).resolve().parents[2]
 
 
 def check_file_presence(file_to_be_checked, list_of_files, keywords):
@@ -195,6 +196,6 @@ def common_merge_operation(directory, operation_code, list_of_files=[], keywords
 
 if __name__ == '__main__':
     # common_merge_operation('stats/location_data', 0, [], ['validated_ip_locations'], True, 'all_validated_ip_location_v4')
-    common_merge_operation('stats/mapping_outputs', 1, [], ['v4'], True, None)
+    common_merge_operation(root_dir / 'stats/mapping_outputs', 1, [], ['v4'], True, None)
 # common_merge_operation('stats/location_data/iplocation_files', 2, [], ['ipgeolocation_file_v4_'], True, 'iplocation_location_output_v4_default')
 # common_merge_operation('stats/caida_data', 3, [], ['uniq_ip_dict_caida_all_links_v6_'], True, 'uniq_ip_dict_caida_all_links_v6_merged')

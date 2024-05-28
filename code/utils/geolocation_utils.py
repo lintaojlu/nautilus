@@ -35,7 +35,7 @@ LandingPoints = namedtuple('LandingPoints', ['latitude', 'longitude', 'country',
 def load_all_geolocation_sources(ip_version=4, tags='default'):
     # Loading data from all geolocation sources
 
-    directory = 'stats/location_data'
+    directory = root_dir / 'stats/location_data'
 
     try:
 
@@ -73,15 +73,15 @@ def load_all_geolocation_sources(ip_version=4, tags='default'):
 def load_sol_validated_file(ip_version=4):
     # If SoL validation is done, we can eliminate some of the incorrect location sources
 
-    directory = 'stats/location_data'
+    directory = root_dir / 'stats/location_data'
 
     file = f'{directory}/all_validated_ip_location_v{ip_version}'
 
     result = None
 
     if not Path(file).exists():
-        result = common_merge_operation('stats/location_data', 0, [], [f'validated_ip_locations_v{ip_version}'], True,
-                                        f'all_validated_ip_location_v{ip_version}')
+        result = common_merge_operation(root_dir / 'stats/location_data', 0, [], [f'validated_ip_locations_v{ip_version}'], True,
+                                        root_dir / f'all_validated_ip_location_v{ip_version}')
     else:
         print(f'Directly loading the saved SoL file from all sources')
         with open(file, 'rb') as fp:
@@ -97,7 +97,7 @@ def load_sol_validated_file(ip_version=4):
 def load_all_probe_ip_to_locations():
     # Unfortunately for CAIDA our source does not provide IPs for anchors (maybe a future work)
     # Let's utilize RIPE data
-    ripe_probe_file = 'stats/all_ripe_probes_ip_and_coordinates'
+    ripe_probe_file = root_dir / 'stats/all_ripe_probes_ip_and_coordinates'
 
     if Path(ripe_probe_file).exists():
         with open(ripe_probe_file, 'rb') as fp:
@@ -274,7 +274,7 @@ def generate_latlon_cluster_and_score_map(all_ips, ip_version=4, mode=2, thresho
     geolocation_latlon_cluster_and_score_map = {}
     geolocation_latlon_cluster_and_score_map_sol_validated = {}
 
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     # This is if we want individual sources
@@ -441,7 +441,7 @@ def get_country_to_continent_map():
 
 
 def get_country_alpha_to_digit():
-    country_file = Path.cwd() / 'stats' / 'iso3166-countrycodes.txt'
+    country_file = root_dir / 'stats' / 'iso3166-countrycodes.txt'
 
     with open(country_file) as f:
         file_content = f.readlines()
@@ -500,7 +500,7 @@ def get_country_and_continent_clusters_for_all_ips(all_ips, ip_version=4, mode=2
     geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated = generate_latlon_cluster_and_score_map(
         all_ips, ip_version, mode, sol_threshold)
 
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
 
     geolocation_country_cluster, geolocation_continent_cluster = {}, {}
     geolocation_country_cluster_sol_validated, geolocation_continent_cluster_sol_validated = {}, {}
@@ -580,8 +580,8 @@ def save_shp_file(gdf, file):
 
 
 def generate_gdf_dict():
-    shp_file_location = Path.cwd() / 'stats/IPUMSI_world_release2020/world_countries_2020.shp'
-    save_file_location = Path.cwd() / 'stats/mapping_outputs/country_neighbors_as_3digit_codes'
+    shp_file_location = root_dir / 'stats/IPUMSI_world_release2020/world_countries_2020.shp'
+    save_file_location = root_dir / 'stats/mapping_outputs/country_neighbors_as_3digit_codes'
 
     if Path(save_file_location).exists():
         print('Directly loading from the saved file')
@@ -809,7 +809,7 @@ def get_countries_with_submarine_landing_points():
     submarine_countries = set()
     country_2alpha_to_digit = get_country_alpha_to_digit()
 
-    with open('stats/submarine_data/landing_points_dict', 'rb') as fp:
+    with open(root_dir / 'stats/submarine_data/landing_points_dict', 'rb') as fp:
         landing_points = pickle.load(fp)
 
     for landing_point in landing_points.values():
@@ -840,7 +840,7 @@ def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map
         'de_te': []
     }
 
-    save_directory = Path.cwd() / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     if mode in [0, 2]:
@@ -1007,7 +1007,7 @@ def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map
 
 
 def generate_country_3d_to_3c_dict():
-    country_file = Path.cwd() / 'stats' / 'iso3166-countrycodes.txt'
+    country_file = root_dir / 'stats' / 'iso3166-countrycodes.txt'
 
     with open(country_file) as fp:
         file_content = fp.readlines()
@@ -1036,16 +1036,16 @@ def get_country_3c_codes(country_digit_tuple, country_3d_to_3c_dict):
 
 
 def get_top_country_continent_pairs(ip_version=4):
-    with open('stats/mapping_outputs/geolocation_country_cluster_sol_validated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/geolocation_country_cluster_sol_validated_v{}'.format(ip_version), 'rb') as fp:
         geolocation_country_code_cluster_map = pickle.load(fp)
 
-    with open('stats/mapping_outputs/geolocation_continent_cluster_sol_validated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/geolocation_continent_cluster_sol_validated_v{}'.format(ip_version), 'rb') as fp:
         geolocation_continent_cluster_map = pickle.load(fp)
 
-    with open('stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v{}'.format(ip_version), 'rb') as fp:
         final_mapping_output = pickle.load(fp)
 
-    with open('stats/mapping_outputs/categories_map_sol_validated_updated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/categories_map_sol_validated_updated_v{}'.format(ip_version), 'rb') as fp:
         categories_map = pickle.load(fp)
 
     print(f'Finished loading the files')
@@ -1173,7 +1173,7 @@ def get_top_country_continent_pairs(ip_version=4):
     for key, value in sorted_continent_pairs_count.items():
         print(f'{key}: {value}')
 
-    with open('stats/mapping_outputs/country_pairs_links', 'wb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/country_pairs_links', 'wb') as fp:
         pickle.dump(country_pairs_links, fp)
 
 
