@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from traceroute import ripe_traceroute_utils
-from utils import traceroute_utils, common_utils, geolocation_utils, merge_data
+from utils import traceroute_utils, common_utils, merge_data
 from location import ripe_geolocation_utils, caida_geolocation_utils, maxmind_utils, ipgeolocation_utils
 from ip_to_as import whois_radb_utils, whois_rpki_utils, cymru_whois_utils, whois_itdk_utils
 
