@@ -37,23 +37,23 @@ if __name__ == '__main__':
 
     print('******* Generating geolocation results *******')
     with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
-        sample_ips_list = pickle.load(fp)
+        ips_list = pickle.load(fp)
 
     print('1. RIPE geolocation')
-    ripe_location = ripe_geolocation_utils.generate_location_for_list_of_ips_ripe(sample_ips_list, ip_version)
+    ripe_location = ripe_geolocation_utils.generate_location_for_list_of_ips_ripe(ips_list, ip_version)
     print(f'RIPE: Results for {len(ripe_location)} IPs')
 
     print('2. CAIDA geolocation')
-    caida_location = caida_geolocation_utils.generate_location_for_list_of_ips(sample_ips_list)
+    caida_location = caida_geolocation_utils.generate_location_for_list_of_ips(ips_list)
     print(f'CAIDA: Results for {len(caida_location)} IPs')
 
     print('3. Maxmind geolocation')
-    maxmind_location, skipped_ips = maxmind_utils.generate_locations_for_list_of_ips(sample_ips_list, ip_version)
+    maxmind_location, skipped_ips = maxmind_utils.generate_locations_for_list_of_ips(ips_list, ip_version)
     print(f'Maxmind: Results for {len(maxmind_location)} IPs')
 
     print('4. IPGeolocation geolocation')
-    ipgeolocation_utils.generate_location_for_list_of_ips(sample_ips_list, in_chunks=False, args=args,
-                                                          len_single_file=4500)
+    # ipgeolocation_utils.generate_location_for_list_of_ips(ips_list, in_chunks=False, args=args,
+    #                                                       len_single_file=4500)
 
     print('******* Merging the geolocation results *******')
     merge_data.common_merge_operation('stats/location_data/iplocation_files', 2, [], ['ipgeolocation_file_'], True, f'iplocation_location_output_v{ip_version}_default')
@@ -82,6 +82,7 @@ if __name__ == '__main__':
     print(f'RPKI: Results for {len(rpki_output)} IPs')
 
     print('4. RADB queries')
+    args['whois_cmd_location'] = '/home/lintao/anaconda3/envs/ki3/bin/whois'
     radb_output = whois_radb_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
                                                                   in_chunks=in_chunks)
     print(f'RADB: Results for {len(radb_output)} IPs')

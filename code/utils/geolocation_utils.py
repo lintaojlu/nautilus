@@ -39,25 +39,25 @@ def load_all_geolocation_sources(ip_version=4, tags='default'):
 
     try:
 
-        with open('{}/ripe_location_ouput_v{}_{}'.format(directory, ip_version, tags), 'rb') as fp:
+        with open('{}/ripe_location_output_v{}_{}'.format(directory, ip_version, tags), 'rb') as fp:
             ripe_location_dict = pickle.load(fp)
 
         print(f'From RIPE, we got result for {len(ripe_location_dict)} IPs')
 
         if ip_version == 4:
-            with open('{}/caida_location_ouput_v{}_{}'.format(directory, ip_version, tags), 'rb') as fp:
+            with open('{}/caida_location_output_{}'.format(directory, tags), 'rb') as fp:
                 caida_location_dict = pickle.load(fp)
         else:
             caida_location_dict = {}
 
         print(f'From CAIDA, we got results for {len(caida_location_dict)} IPs')
 
-        with open('{}/maxmind_location_ouput_v{}_{}'.format(directory, ip_version, tags), 'rb') as fp:
+        with open('{}/maxmind_location_output_v{}_{}'.format(directory, ip_version, tags), 'rb') as fp:
             maxmind_location_dict = pickle.load(fp)
 
         print(f'From Maxmind, we got results for {len(maxmind_location_dict)} IPs')
 
-        with open('{}/iplocation_location_ouput_v{}_{}'.format(directory, ip_version, tags), 'rb') as fp:
+        with open('{}/iplocation_location_output_v{}_{}'.format(directory, ip_version, tags), 'rb') as fp:
             iplocation_dict = pickle.load(fp)
 
         print(f'From IPlocation, we got results for {len(iplocation_dict)} IPs')

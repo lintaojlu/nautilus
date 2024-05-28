@@ -399,7 +399,7 @@ if __name__ == '__main__':
         with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
             sample_ips_list = pickle.load(fp)
         # list_of_ips = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
-        # list_of_ips = sample_ips_list[:20]
+        # list_of_ips = ips_list[:20]
 
     if mode == 0:
         generate_location_for_list_of_ips(list_of_ips, in_chunks=True, args=args, len_single_file=4500)

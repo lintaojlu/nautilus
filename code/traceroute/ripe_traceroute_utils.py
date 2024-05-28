@@ -187,7 +187,10 @@ def geolocation_sol_validation_ripe(updated_traceroute_output, probe_to_coordina
                                     ip_location_with_penalty_and_total_count, v4=True):
     for count, traceroute in enumerate(updated_traceroute_output):
         probe = traceroute.other_info['probe_id']
-        initial_lat_lon = probe_to_coordinate_map[str(probe)][1]
+        try:
+            initial_lat_lon = probe_to_coordinate_map.get(str(probe), [])[1]
+        except IndexError:
+            continue
 
         for key, contents in traceroute.hops.items():
 
