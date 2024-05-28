@@ -266,6 +266,7 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=None, tags='default
     for ip in list_of_ips:
         whois_output[ip] = ip_to_as.get(ip, None)
     save_whois_itdk_output(whois_output, ip_version, tags)
+    return whois_output
 
 
 if __name__ == '__main__':
