@@ -170,8 +170,7 @@ regenerate_categories_map (mode=mode, ip_version=ip_version)
 
 
 If the prior pre-processing steps are not completed properly, the relevant error message identifying the missing pieces will be displayed while running the above code snippet. In addition to the pre-processing steps, the following operations or downloads will be needed to be carried out (one-time operation)
-
-(i) Download a countries shape file from IPUMSI (https://international.ipums.org/international/resources/gis/IPUMSI_world_release2020.zip) and the unzipped folder needs to be saved in stats directory 
+(i) Download a countries shape file from IPUMSI (https://international.ipums.org/international/resources/gis/IPUMSI_world_release2024.zip) and the unzipped folder needs to be saved in stats directory 
 (ii) Execute asrank.py script using the following command “python utils/asrank.py -v -a stats/asns.jsonl -o stats/organizations.jsonl -l stats/asnLinks.jsonl -u https://api.asrank.caida.org/v2/graphql” (All the code and the data is from CAIDA ASRank for this portion)
 
 The final mapping results will be generated in the 'stats' directory as 'link_to_cable_and_score_mapping_sol_validated_v4' for IPv4 and 'link_to_cable_and_score_mapping_sol_validated_v6' for IPv6 

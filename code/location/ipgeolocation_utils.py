@@ -127,6 +127,7 @@ def extract_geolocation_info(data):
     Inputs
         data -> The list of results by each IP geolocations called by ipgeolocation.net
     """
+    # 一个网站上多个定位库的结果都会被保存在一个列表中
 
     result = []
     for item in data:

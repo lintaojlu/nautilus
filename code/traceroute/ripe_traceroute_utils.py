@@ -55,7 +55,7 @@ def download_data_from_ripe_atlas(start_time, end_time, msm_id):
         print(f"Traceroute data is before 2016-05-08")
         return
 
-    file_name = 'raw_output_' + msm_id + '_' + start_time.strftime("%Y_%m_%d") + '_' + end_time.strftime("%Y_%m_%d") + '.txt'
+    file_name = 'raw_output_' + msm_id + '_' + start_time.strftime("%Y_%m_%d_%H") + '_' + end_time.strftime("%Y_%m_%d_%H") + '.txt'
     file_path = save_directory / file_name
 
     start_time_int = int(calendar.timegm(start_time.timetuple()))
@@ -65,7 +65,7 @@ def download_data_from_ripe_atlas(start_time, end_time, msm_id):
     else:
         end_time_int = int(calendar.timegm(end_time.timetuple()))
 
-    print(f'Downloading/Loading ripe {msm_id} traceroutes: start_time: {start_time}, end_time: {end_time}')
+    print(f'{msm_id}: start_time: {start_time}, end_time: {end_time}')
 
     retries = 0
     max_retries = 10

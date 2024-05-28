@@ -3,8 +3,13 @@ from pathlib import Path
 import subprocess
 
 import os, sys
+from code.utils.merge_data import save_results_to_file
 
-from merge_data import save_results_to_file
+root_dir = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(root_dir))
+
+caida_directory = os.path.join(root_dir, 'stats/caida_data')
+ripe_directory = os.path.join(root_dir, 'stats/ripe_data')
 
 
 def merge_ab_and_ba_links(dictionary, codes=None, mode=0):
@@ -154,7 +159,7 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         print(f'Finally, we have {len(traceroute_dict)} traceroute links')
 
         # Let's save the entire output and only the links as 2 files
-        save_directory = root_directory / 'stats/mapping_outputs'
+        save_directory = root_dir / 'stats/mapping_outputs'
         save_directory.mkdir(parents=True, exist_ok=True)
 
         links = list(traceroute_dict.keys())
@@ -196,7 +201,7 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
 
 
 def load_all_links_and_ips_data(ip_version=4):
-    save_directory = root_directory / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     links, uniq_ips_list = [], []
@@ -220,7 +225,7 @@ def load_all_links_and_ips_data(ip_version=4):
 
 
 def generate_test_case_links_and_ips_data(ip_version=4):
-    save_directory = root_directory / 'stats/mapping_outputs'
+    save_directory = root_dir / 'stats/mapping_outputs'
 
     save_file = 'test_links_v{}'.format(ip_version)
 
@@ -302,11 +307,6 @@ def generate_test_case_links_and_ips_data(ip_version=4):
 
 if __name__ == '__main__':
     # Let's first load the data from CAIDA
-    root_directory = Path(__file__).resolve().parents[2]
-    caida_directory = os.path.join(root_directory, 'stats/caida_data')
-    ripe_directory = os.path.join(root_directory, 'stats/ripe_data')
-    print(f'Root directory is {root_directory}')
-    print(f'CAIDA directory is {caida_directory}')
     load_all_links_and_ips_data(ip_version=4)
 
 # test_links, uniq_ips_list = generate_test_case_links_and_ips_data(ip_version=4)

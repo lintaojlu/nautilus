@@ -20,8 +20,8 @@ def get_node_to_geolocation_map():
         return ip_to_geo_dict
 
     else:
-        midar_iff_nodes_file_path = root_path / 'stats/location_data/midar-iff.nodes'
-        caida_nodes_to_geo_file_path = root_path / 'stats/location_data/midar-iff.nodes.geo'
+        midar_iff_nodes_file_path = root_path / 'stats/location_data/caida_itdk_files/2022-02/midar-iff.nodes'
+        caida_nodes_to_geo_file_path = root_path / 'stats/location_data/caida_itdk_files/2022-02/midar-iff.nodes.geo'
 
         if Path(midar_iff_nodes_file_path).exists() and Path(caida_nodes_to_geo_file_path).exists():
 
