@@ -75,6 +75,16 @@ class ITDK:
                 url = f"{self.url}/{date}/kapar-midar-iff.nodes.geo.gz"
                 os.system(f"wget {url}")
                 os.system(f"gzip -d kapar-midar-iff.nodes.geo.gz")
+
+            # 下载和解压.nodes.as文件
+            if not kapar:
+                url = f"{self.url}/{date}/midar-iff.nodes.as.gz"
+                os.system(f"wget {url}")
+                os.system(f"gzip -d midar-iff.nodes.as.gz")
+            else:
+                url = f"{self.url}/{date}/kapar-midar-iff.nodes.as.gz"
+                os.system(f"wget {url}")
+                os.system(f"gzip -d kapar-midar-iff.nodes.as.gz")
         else:
             # 2013年7月之后的文件是bzip2压缩格式
             # 下载和解压.nodes文件
@@ -96,6 +106,16 @@ class ITDK:
                 url = f"{self.url}/{date}/kapar-midar-iff.nodes.geo.bz2"
                 os.system(f"wget {url}")
                 os.system(f"bzip2 -d kapar-midar-iff.nodes.geo.bz2")
+
+            # 下载和解压.nodes.as文件
+            if not kapar:
+                url = f"{self.url}/{date}/midar-iff.nodes.as.bz2"
+                os.system(f"wget {url}")
+                os.system(f"bzip2 -d midar-iff.nodes.as.bz2")
+            else:
+                url = f"{self.url}/{date}/kapar-midar-iff.nodes.as.bz2"
+                os.system(f"wget {url}")
+                os.system(f"bzip2 -d kapar-midar-iff.nodes.as.bz2")
         # 完成下载后返回上级目录
         os.chdir('../../../../')
         print(f'cwd: {os.getcwd()}')
