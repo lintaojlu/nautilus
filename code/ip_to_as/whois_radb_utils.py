@@ -86,11 +86,10 @@ def load_radb_whois_output(args, in_chunks, ips_list=[], tags='default'):
     return radb_output
 
 
+args = {'whois_cmd_location': '/home/lintao/anaconda3/envs/ki3/bin/whois'}
+
 if __name__ == '__main__':
-
     mode = 1
-    args = {}
-
     ip_version = 4
 
     if mode == 0:
@@ -98,12 +97,10 @@ if __name__ == '__main__':
         args['max_ips_to_process'] = int(sys.argv[2])
         ip_version = sys.argv[3]
         args['ips_file_location'] = root_dir / 'stats/mapping_outputs/all_ips_v{}'.format(ip_version)
-        args['whois_cmd_location'] = '/home/lintao/anaconda3/envs/ki3/bin/whois'
     else:
-        args['whois_cmd_location'] = '/home/lintao/anaconda3/envs/ki3/bin/whois'
         with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
             list_of_ips = pickle.load(fp)
-    # list_of_ips = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
+    list_of_ips = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
 
     if mode == 0:
         in_chunks = True
