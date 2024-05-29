@@ -290,9 +290,15 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=None, tags='default
 
 
 if __name__ == '__main__':
+    t1 = datetime.datetime.now()
+    print(t1)
     ip_version = 4
-    with open(root_directory / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
-        list_of_ips = pickle.load(fp)
-    # list_of_ips = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
+    # with open(root_directory / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
+    #     list_of_ips = pickle.load(fp)
+    list_of_ips = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
 
     generate_ip2as_for_list_of_ips(ip_version, list_of_ips, 'default')
+
+    t2 = datetime.datetime.now()
+    print(t2)
+    print(t2 - t1)
