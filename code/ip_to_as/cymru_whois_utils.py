@@ -6,6 +6,8 @@ import pickle
 
 import os, sys
 
+from tqdm import tqdm
+
 root_dir = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root_dir))
 
@@ -59,7 +61,7 @@ def generate_ip2as_for_list_of_ips(ips_list, ip_version=4, tags='default'):
             print(f'Current start index is {start_index}')
             try:
                 records = cymru_client.lookupmany(ips_list[start_index:])
-                for record in records:
+                for record in tqdm(records, total=len(records), desc='Cymru whois'):
                     cymru_output[ips_list[count]] = (record.owner, record.asn)
                     count += 1
                     if count % 10000 == 0:

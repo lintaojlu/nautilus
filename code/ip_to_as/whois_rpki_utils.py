@@ -6,6 +6,8 @@ import requests
 
 import warnings
 
+from tqdm import tqdm
+
 warnings.filterwarnings("ignore")
 
 root_dir = Path(__file__).resolve().parents[2]
@@ -29,7 +31,7 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=[], tags='default',
         print(f'Invalid list passed. Pass valid list of IPs')
         return None
 
-    for count, ip_address in enumerate(list_of_ips):
+    for count, ip_address in tqdm(enumerate(list_of_ips), desc='RPKI whois', total=len(list_of_ips)):
         try:
             url = f'https://rest.bgp-api.net/api/v1/prefix/{ip_address}/32/search'
             response = requests.get(url)
@@ -43,15 +45,16 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=[], tags='default',
                     asns.extend(entry.get('originASNs', []))
 
             if asns:
-                print(f'IP address is {ip_address} and ASNs are {asns}')
+                # print(f'IP address is {ip_address} and ASNs are {asns}')
                 rpki_output[ip_address] = asns
             else:
-                print(f'No AS information found for IP {ip_address}')
+                # print(f'No AS information found for IP {ip_address}')
+                continue
         except Exception as e:
             print(f'Error processing IP {ip_address}: {str(e)}')
 
-        if count % 100 == 0:
-            print(f'Doing a partial save at count {count}')
+        if count % 1000 == 0:
+            # print(f'Doing a partial save at count {count}')
             save_rpki_whois_output(rpki_output, ip_version, tags)
 
     print(f'Doing a final save with {len(rpki_output)} IPs processed')

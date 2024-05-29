@@ -4,6 +4,8 @@ import pickle, subprocess, time, sys
 
 import warnings
 
+from tqdm import tqdm
+
 warnings.filterwarnings("ignore")
 root_dir = Path(__file__).resolve().parents[2]
 
@@ -42,7 +44,7 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=[], tags='default',
 
     radb_output = {}
 
-    for count, ip in enumerate(list_of_ips):
+    for count, ip in tqdm(enumerate(list_of_ips), desc='RADB whois', total=len(list_of_ips)):
 
         cmd_str = f'{whois_cmd_location} -h whois.radb.net {ip}'
         proc = subprocess.Popen(cmd_str, stdout=subprocess.PIPE, shell=True)
@@ -58,10 +60,11 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=[], tags='default',
                         ip_to_as_map_result.append(result)
                         radb_output[ip] = ip_to_as_map_result
                 except:
-                    print(f'Failed for this item: {item}')
+                    continue
+                    # print(f'Failed for this item: {item}')
 
         if count % 1000 == 0:
-            print(f'Doing a partial save at count {count}')
+            # print(f'Doing a partial save at count {count}')
             save_radb_whois_output(radb_output, ip_version, tags)
 
     print(f'Doing a final save with {len(radb_output)} IPs processed')
