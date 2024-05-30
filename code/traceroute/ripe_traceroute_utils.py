@@ -342,7 +342,7 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
     while time < end_time:
 
         print('Stage 1 : Loading/Downloading the data from RIPE Atlas')
-        time_end = time + timedelta(hours=24)
+        time_end = time + timedelta(hours=1)
         # save_file is like raw_output_5051_current_date_label
         traceroute_output, save_file = download_data_from_ripe_atlas(time, time_end, msm_id)
         print(f'Length of raw traceroutes is {len(traceroute_output)}')

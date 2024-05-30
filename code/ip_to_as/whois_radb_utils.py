@@ -63,9 +63,9 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=[], tags='default',
 
     radb_output = {}
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    with ThreadPoolExecutor(max_workers=2) as executor:
         future_to_ip = {executor.submit(whois_query, ip, whois_cmd_location): ip for ip in list_of_ips}
-        for count, future in tqdm(enumerate(as_completed(future_to_ip)), desc='RADB whois', total=len(list_of_ips)):
+        for count, future in tqdm(enumerate(as_completed(future_to_ip)), desc='RADB whois'):
             ip, list_out = future.result()
             ip, results = parse_whois_output(ip, list_out)
             if results:
@@ -85,6 +85,7 @@ def whois_query(ip, whois_cmd_location):
     cmd_str = f'{whois_cmd_location} -h whois.radb.net {ip}'
     proc = subprocess.Popen(cmd_str, stdout=subprocess.PIPE, shell=True)
     out, _ = proc.communicate()
+    time.sleep(1)
     return ip, out.decode(errors='ignore').split('\n')
 
 

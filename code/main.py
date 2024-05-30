@@ -21,73 +21,72 @@ if __name__ == '__main__':
     # The number (6) in example below indicates the IP version, which will be according to the measurement IDs
     # That number is mostly used for just saving the results
     start_time = datetime(2024, 5, 1, 0)
-    end_time = datetime(2024, 5, 2, 0)
+    end_time = datetime(2024, 5, 1, 1)
     ip_version = 4
     in_chunks = False
-    args = {'chromedriver_location': root_dir / 'chromedriver', 'ip_version': ip_version}
+    args = {'chromedriver_location': root_dir / 'chromedriver', 'ip_version': ip_version, 'tags': 'default'}
 
-    print('******* Generating the traceroutes *******')
-    msm_ids = ['5051', '5151']
-    for msm_id in msm_ids:
-        result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, False)
-        print(f'Result length for {msm_id} is {len(result)}')
+    # print(datetime.now(), '******* Generating the traceroutes *******')
+    # msm_ids = ['5051', '5151']
+    # for msm_id in msm_ids:
+    #     result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, False)
+    #     print(f'Result length for {msm_id} is {len(result)}')
+    #
+    # print(datetime.now(), '******* Generating all the unique IPs and links *******')
+    # traceroute_utils.load_all_links_and_ips_data(ip_version=ip_version)
+    #
+    # print(datetime.now(), '******* Generating geolocation results *******')
+    # with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
+    #     ips_list = pickle.load(fp)
+    #
+    # print('1. RIPE geolocation')
+    # ripe_location = ripe_geolocation_utils.generate_location_for_list_of_ips_ripe(ips_list, ip_version)
+    # print(f'RIPE: Results for {len(ripe_location)} IPs')
+    #
+    # print('2. CAIDA geolocation')
+    # caida_location = caida_geolocation_utils.generate_location_for_list_of_ips(ips_list)
+    # print(f'CAIDA: Results for {len(caida_location)} IPs')
+    #
+    # print('3. Maxmind geolocation')
+    # maxmind_location, skipped_ips = maxmind_utils.generate_locations_for_list_of_ips(ips_list, ip_version)
+    # print(f'Maxmind: Results for {len(maxmind_location)} IPs')
+    #
+    # print('4. IPGeolocation geolocation')
+    # ipgeolocation_utils.generate_location_for_list_of_ips(ips_list, args=args)
+    #
+    # print(datetime.now(), '******* Merging the geolocation results *******')
+    # merge_data.common_merge_operation('stats/location_data/iplocation_files', 2, [], ['ipgeolocation_file_'], True,
+    #                                   f'iplocation_location_output_v{ip_version}_default')
+    #
+    # print(datetime.now(), '******* SoL validation *******')
+    # for msm_id in msm_ids:
+    #     result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, True)
+    #     print(f'Result length for {msm_id} is {len(result)}')
 
-    print('******* Generating all the unique IPs and links *******')
-    traceroute_utils.load_all_links_and_ips_data(ip_version=ip_version)
-
-    print('******* Generating geolocation results *******')
-    with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
-        ips_list = pickle.load(fp)
-
-    print('1. RIPE geolocation')
-    ripe_location = ripe_geolocation_utils.generate_location_for_list_of_ips_ripe(ips_list, ip_version)
-    print(f'RIPE: Results for {len(ripe_location)} IPs')
-
-    print('2. CAIDA geolocation')
-    caida_location = caida_geolocation_utils.generate_location_for_list_of_ips(ips_list)
-    print(f'CAIDA: Results for {len(caida_location)} IPs')
-
-    print('3. Maxmind geolocation')
-    maxmind_location, skipped_ips = maxmind_utils.generate_locations_for_list_of_ips(ips_list, ip_version)
-    print(f'Maxmind: Results for {len(maxmind_location)} IPs')
-
-    print('4. IPGeolocation geolocation')
-    # ipgeolocation_utils.generate_location_for_list_of_ips(ips_list, in_chunks=False, args=args,
-    #                                                       len_single_file=4500)
-
-    print('******* Merging the geolocation results *******')
-    merge_data.common_merge_operation('stats/location_data/iplocation_files', 2, [], ['ipgeolocation_file_'], True, f'iplocation_location_output_v{ip_version}_default')
-
-
-    print('******* SoL validation *******')
-    for msm_id in msm_ids:
-        result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, True)
-        print(f'Result length for {msm_id} is {len(result)}')
-
-    print('******* IP to AS mapping *******')
+    print(datetime.now(), '******* IP to AS mapping *******')
     with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
         list_of_ips = pickle.load(fp)
+    #
+    # print('1. CAIDA ITDK queries')
+    # caida_output = whois_itdk_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, 'default')
+    # print(f'CAIDA: Results for {len(caida_output)} IPs')
+    #
+    # print('2. Cymru queries')
+    # cymru_output = cymru_whois_utils.generate_ip2as_for_list_of_ips(list_of_ips, ip_version, 'default')
+    # print(f'Cymru: Results for {len(cymru_output)} IPs')
+    #
+    # print('3. RADB queries')
+    # args['whois_cmd_location'] = '/home/lintao/anaconda3/envs/ki3/bin/whois'
+    # radb_output = whois_radb_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
+    #                                                               in_chunks=in_chunks)
+    # print(f'RADB: Results for {len(radb_output)} IPs')
 
-    print('1. CAIDA ITDK queries')
-    caida_output = whois_itdk_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, 'default')
-    print(f'CAIDA: Results for {len(caida_output)} IPs')
-
-    print('2. Cymru queries')
-    cymru_output = cymru_whois_utils.generate_ip2as_for_list_of_ips(list_of_ips, ip_version, 'default')
-    print(f'Cymru: Results for {len(cymru_output)} IPs')
-
-    print('3. RPKI queries')
+    print('4. RPKI queries')
     rpki_output = whois_rpki_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
                                                                   in_chunks=in_chunks)
     print(f'RPKI: Results for {len(rpki_output)} IPs')
 
-    print('4. RADB queries')
-    args['whois_cmd_location'] = '/home/lintao/anaconda3/envs/ki3/bin/whois'
-    radb_output = whois_radb_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
-                                                                  in_chunks=in_chunks)
-    print(f'RADB: Results for {len(radb_output)} IPs')
-
-    print('******* Nautilus Mapping *******')
+    print(datetime.now(), '******* Nautilus Mapping *******')
     # mode = 2：同时生成地理位置验证和 SoL 验证的电缆映射。
     mode = 2
 

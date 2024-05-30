@@ -20,6 +20,7 @@ from collections import Counter
 import geopandas as gpd
 from itertools import product
 from collections.abc import Iterable
+
 root_dir = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root_dir))
 
@@ -80,8 +81,9 @@ def load_sol_validated_file(ip_version=4):
     result = None
 
     if not Path(file).exists():
-        result = common_merge_operation(root_dir / 'stats/location_data', 0, [], [f'validated_ip_locations_v{ip_version}'], True,
-                                        root_dir / f'all_validated_ip_location_v{ip_version}')
+        result = common_merge_operation(root_dir / 'stats/location_data', 0, [],
+                                        [f'validated_ip_locations_v{ip_version}'], True,
+                                        f'all_validated_ip_location_v{ip_version}')
     else:
         print(f'Directly loading the saved SoL file from all sources')
         with open(file, 'rb') as fp:
@@ -1036,16 +1038,20 @@ def get_country_3c_codes(country_digit_tuple, country_3d_to_3c_dict):
 
 
 def get_top_country_continent_pairs(ip_version=4):
-    with open(root_dir / 'stats/mapping_outputs/geolocation_country_cluster_sol_validated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/geolocation_country_cluster_sol_validated_v{}'.format(ip_version),
+              'rb') as fp:
         geolocation_country_code_cluster_map = pickle.load(fp)
 
-    with open(root_dir / 'stats/mapping_outputs/geolocation_continent_cluster_sol_validated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/geolocation_continent_cluster_sol_validated_v{}'.format(ip_version),
+              'rb') as fp:
         geolocation_continent_cluster_map = pickle.load(fp)
 
-    with open(root_dir / 'stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v{}'.format(ip_version),
+              'rb') as fp:
         final_mapping_output = pickle.load(fp)
 
-    with open(root_dir / 'stats/mapping_outputs/categories_map_sol_validated_updated_v{}'.format(ip_version), 'rb') as fp:
+    with open(root_dir / 'stats/mapping_outputs/categories_map_sol_validated_updated_v{}'.format(ip_version),
+              'rb') as fp:
         categories_map = pickle.load(fp)
 
     print(f'Finished loading the files')

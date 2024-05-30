@@ -10,14 +10,15 @@ from collections import namedtuple
 
 from sklearn.neighbors import BallTree
 import math
+root_dir = Path(__file__).resolve().parents[2]
 
-telegeography_directory = Path.cwd() / 'stats/submarine-cable-map'  
+telegeography_directory = root_dir / 'stats/submarine-cable-map'  
 
 Cable = namedtuple('Cable', ['name', 'landing_points', 'length', 'owners', 'notes', 'rfs', 'other_info'])
 
 LandingPoints = namedtuple('LandingPoints', ['latitude', 'longitude', 'country', 'location', 'cable'])
 
-save_directory = Path.cwd() / 'stats' / 'submarine_data'
+save_directory = root_dir / 'stats' / 'submarine_data'
 
 def get_all_cable_id():
 	"""

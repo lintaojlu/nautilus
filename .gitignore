@@ -2,3 +2,5 @@
 /stats/
 .idea/
 /IPUMSI_world_release2024.zip
+.DS_Store
+code/test.py
