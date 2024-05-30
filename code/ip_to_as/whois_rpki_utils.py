@@ -31,7 +31,7 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=[], tags='default',
         print(f'Invalid list passed. Pass valid list of IPs')
         return None
 
-    for count, ip_address in tqdm(enumerate(list_of_ips), desc='RPKI whois', total=len(list_of_ips)):
+    for count, ip_address in tqdm(enumerate(list_of_ips), desc='RPKI whois'):
         try:
             url = f'https://rest.bgp-api.net/api/v1/prefix/{ip_address}/32/search'
             response = requests.get(url)
