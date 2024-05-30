@@ -156,7 +156,7 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
 
         merge_ab_and_ba_links(traceroute_dict, None, 1)
 
-        print(f'Finally, we have {len(traceroute_dict)} traceroute links')
+        print(f'# of all links are {len(traceroute_dict)}')
 
         # Let's save the entire output and only the links as 2 files
         save_directory = root_dir / 'stats/mapping_outputs'
