@@ -53,9 +53,10 @@ def download_data_from_ripe_atlas(start_time, end_time, msm_id):
 
     if start_time < datetime(2016, 5, 8, 0, 0, 0):
         print(f"Traceroute data is before 2016-05-08")
-        return
+        return None, None
 
-    file_name = 'raw_output_' + msm_id + '_' + start_time.strftime("%Y_%m_%d_%H") + '_' + end_time.strftime("%Y_%m_%d_%H") + '.txt'
+    file_name = 'raw_output_' + msm_id + '_' + start_time.strftime("%Y_%m_%d_%H") + '_' + end_time.strftime(
+        "%Y_%m_%d_%H") + '.txt'
     file_path = save_directory / file_name
 
     start_time_int = int(calendar.timegm(start_time.timetuple()))
@@ -107,6 +108,7 @@ def download_data_from_ripe_atlas(start_time, end_time, msm_id):
 
     if retries == max_retries:
         print(f"Failed to download {start_time}'s traceroute after {max_retries} attempts")
+        return None, None
 
 
 def process_transform_traceroute(traceroute_data, save_file, return_content=0):
@@ -317,8 +319,9 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
     """
 
     time = start_time
-    d = {}
-    count = 0
+    links_dict = {}
+    raw_traceroute_number = 0
+    processed_traceroute_number = 0
 
     if ip_version == 4:
         v4 = True
@@ -341,17 +344,24 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
     while time < end_time:
 
-        print('Stage 1 : Loading/Downloading the data from RIPE Atlas')
+        print(f'Stage 1 : Loading/Downloading the {msm_id} raw traceroute')
         time_end = time + timedelta(hours=1)
         # save_file is like raw_output_5051_current_date_label
         traceroute_output, save_file = download_data_from_ripe_atlas(time, time_end, msm_id)
+        raw_traceroute_number += len(traceroute_output)
         print(f'Length of raw traceroutes is {len(traceroute_output)}')
 
         print('Stage 2 : Processing the data from RIPE Atlas')
         new_file = 'processed_' + '_'.join(save_file.name.split('_')[1:])
         parent_dir = save_file.parent
         processed_file = parent_dir / new_file
-        updated_traceroute_output = process_transform_traceroute(traceroute_output, processed_file, 1)
+        if Path(processed_file).exists():
+            with open(processed_file, 'rb') as fp:
+                print('Directly loading file from saved locations')
+                updated_traceroute_output = pickle.load(fp)
+        else:
+            updated_traceroute_output = process_transform_traceroute(traceroute_output, processed_file, 1)
+        processed_traceroute_number += len(updated_traceroute_output)
         print(f'Length of processed traceroutes : {len(updated_traceroute_output)}')
 
         if geolocation_validation:
@@ -380,39 +390,37 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
             for a_ripe_hop in ripe_hops:
                 ip_addresses = a_ripe_hop[0]
-                all_latencies = d.get(ip_addresses, [])
+                all_latencies = links_dict.get(ip_addresses, [])
 
                 all_min_latencies = a_ripe_hop[1]
                 all_max_latencies = a_ripe_hop[2]
 
                 latency_min = round((all_min_latencies[1] - all_min_latencies[0]) / 2, 2)
                 all_latencies.append(latency_min)
-                d[ip_addresses] = all_latencies
+                links_dict[ip_addresses] = all_latencies
+        print(f'Finished processing the traceroutes for {time} to {time_end}')
+        print('')
 
         time = time_end
-
-        print(f'Current count is {count} and dictionary length is {len(d)}')
 
         # if count % 6 == 0:
         #     print(f'Writing to a file for count {count // 6}')
         #     file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_' + str(count // 6)
         #     save_file = parent_dir / file_name
         #     with open(save_file, 'wb') as fp:
-        #         pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        #         pickle.dump(links_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
-        count += 1
-
-    end_time_int = int(calendar.timegm(end_time.timetuple()))
-    end_process_time = datetime.fromtimestamp(end_time_int, tz=timezone.utc).strftime("%m_%d_%Y_%H_%M")
-
-    file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_{end_process_time}_count_' + str(
-        count)
+    print(f'Total number of raw traceroutes is {raw_traceroute_number}')
+    print(f'Total number of processed traceroutes is {processed_traceroute_number}')
+    print(f'Total number of the links is {len(links_dict)}')
+    print('')
+    file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_{start_time}_{end_time}'
     save_file = parent_dir / file_name
     with open(save_file, 'wb') as fp:
-        pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(links_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
     print(f'Saved the final result to {save_file}')
 
-    return d
+    return links_dict
 
 
 if __name__ == '__main__':
