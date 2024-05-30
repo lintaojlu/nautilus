@@ -413,7 +413,6 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
     print(f'Total number of raw traceroutes is {raw_traceroute_number}')
     print(f'Total number of processed traceroutes is {processed_traceroute_number}')
     print(f'Total number of the links is {len(links_dict)}')
-    print('')
     file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_{start_time}_{end_time}'
     save_file = parent_dir / file_name
     with open(save_file, 'wb') as fp:
