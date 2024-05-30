@@ -20,7 +20,7 @@ def check_file_presence(file_to_be_checked, list_of_files, keywords):
 
 
 def save_results_to_file(result, directory, save_file_name):
-    print('Saving the results')
+    print('Saving the file: {}/{}'.format(directory, save_file_name))
     with open('{}/{}'.format(directory, save_file_name), 'wb') as fp:
         pickle.dump(result, fp)
 

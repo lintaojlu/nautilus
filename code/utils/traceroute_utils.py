@@ -40,7 +40,7 @@ def merge_ab_and_ba_links(dictionary, codes=None, mode=0):
         else:
             dictionary[key] = [dictionary[key]]
 
-    print(f'Merge count is {merge_count}')
+    print(f'Merged {merge_count} times')
 
 
 def add_tags(dictionary, code):
@@ -63,7 +63,7 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         for file in caida_file:
             if 'uniq' in file:
                 count += 1
-                print(f'Opening CAIDA file: {file}')
+                print(f'Loading CAIDA file: {file}')
                 with open(file, 'rb') as fp:
                     individual_caida_dict = pickle.load(fp)
 
@@ -82,7 +82,7 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         merge_ab_and_ba_links(caida_dict)
         add_tags(caida_dict, ['c-v{}'.format(ip_version)])
 
-        print(f'CAIDA dict length is {len(caida_dict)}')
+        print(f'CAIDA link number is {len(caida_dict)}')
 
         if ip_version == 4:
             msm_id = [5051, 5151]
@@ -92,24 +92,16 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         ripe_dicts = []
 
         for msm in msm_id:
-            cmd_str = 'ls -ltr {}/*{}*'.format(str(ripe_directory), msm)
-            p = subprocess.Popen(cmd_str, shell=True, stdout=subprocess.PIPE)
-            result = p.communicate()[0].decode()
-            ripe_file = result.split('\n')[-2].split()[-1]
-
-            if 'uniq' in ripe_file:
+            ripe_files = os.listdir(ripe_directory)
+            ripe_files = [file for file in ripe_files if 'uniq' in file and str(msm) in file]
+            for ripe_file in ripe_files:
                 print(f'Loading file: {ripe_file}')
-                with open(ripe_file, 'rb') as fp:
+                with open(ripe_directory / ripe_file, 'rb') as fp:
                     ripe_dict = pickle.load(fp)
-
                 merge_ab_and_ba_links(ripe_dict)
-
                 add_tags(ripe_dict, ['r-{}'.format(msm)])
-
-                print(f'RIPE {msm} dict length is {len(ripe_dict)}')
-
+                print(f'RIPE {msm} links number is {len(ripe_dict)}')
                 ripe_dicts.append(ripe_dict)
-
         traceroute_dict = caida_dict.copy()
         for ripe_dict in ripe_dicts:
             traceroute_dict.update(ripe_dict)
@@ -155,17 +147,11 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
             pass
 
         merge_ab_and_ba_links(traceroute_dict, None, 1)
-
-        print(f'# of all links are {len(traceroute_dict)}')
-
         # Let's save the entire output and only the links as 2 files
         save_directory = root_dir / 'stats/mapping_outputs'
         save_directory.mkdir(parents=True, exist_ok=True)
-
         links = list(traceroute_dict.keys())
-
         save_file = 'full_processed_traceroute_output_v{}'.format(ip_version)
-
         save_results_to_file(traceroute_dict, str(save_directory), save_file)
 
         # Let's delete traceroute dict so save memory
@@ -175,24 +161,17 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
             pass
 
         save_file = 'links_v{}'.format(ip_version)
-
         save_results_to_file(links, str(save_directory), save_file)
-
         # Now, let's find all the uniq IPs
         uniq_ips = set()
-
         for ip_1, ip_2 in links:
             uniq_ips.add(ip_1)
             uniq_ips.add(ip_2)
-
         uniq_ips_list = list(uniq_ips)
-
-        print(f'# of uniq IPs are {len(uniq_ips_list)}')
-
         save_file = 'all_ips_v{}'.format(ip_version)
-
         save_results_to_file(uniq_ips_list, str(save_directory), save_file)
-
+        print(f'# of all links are {len(traceroute_dict)}')
+        print(f'# of uniq IPs are {len(uniq_ips_list)}')
         return links, uniq_ips_list
 
     else:

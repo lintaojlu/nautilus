@@ -21,19 +21,20 @@ if __name__ == '__main__':
     # The number (6) in example below indicates the IP version, which will be according to the measurement IDs
     # That number is mostly used for just saving the results
     start_time = datetime(2024, 5, 1, 0)
-    end_time = datetime(2024, 5, 1, 1)
+    end_time = datetime(2024, 5, 2, 0)
     ip_version = 4
     in_chunks = False
     args = {'chromedriver_location': root_dir / 'chromedriver', 'ip_version': ip_version, 'tags': 'default'}
-
+    #
     # print(datetime.now(), '******* Generating the traceroutes *******')
-    # msm_ids = ['5051', '5151']
+    # msm_ids = ['5051']
     # for msm_id in msm_ids:
     #     result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, False)
-    #     print(f'Result length for {msm_id} is {len(result)}')
-    #
-    # print(datetime.now(), '******* Generating all the unique IPs and links *******')
-    # traceroute_utils.load_all_links_and_ips_data(ip_version=ip_version)
+
+    print(datetime.now(), '******* Generating all the unique IPs and links *******')
+    links, uniq_ips_list = traceroute_utils.load_all_links_and_ips_data(ip_version=ip_version)
+    print(f'Unique IPs: {len(uniq_ips_list)}')
+    print(f'Unique Links: {len(links)}')
     #
     # print(datetime.now(), '******* Generating geolocation results *******')
     # with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
@@ -62,10 +63,10 @@ if __name__ == '__main__':
     # for msm_id in msm_ids:
     #     result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, True)
     #     print(f'Result length for {msm_id} is {len(result)}')
-
-    print(datetime.now(), '******* IP to AS mapping *******')
-    with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
-        list_of_ips = pickle.load(fp)
+    #
+    # print(datetime.now(), '******* IP to AS mapping *******')
+    # with open(root_dir / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
+    #     list_of_ips = pickle.load(fp)
     #
     # print('1. CAIDA ITDK queries')
     # caida_output = whois_itdk_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, 'default')
@@ -81,21 +82,21 @@ if __name__ == '__main__':
     #                                                               in_chunks=in_chunks)
     # print(f'RADB: Results for {len(radb_output)} IPs')
 
-    print('4. RPKI queries')
-    rpki_output = whois_rpki_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
-                                                                  in_chunks=in_chunks)
-    print(f'RPKI: Results for {len(rpki_output)} IPs')
-
-    print(datetime.now(), '******* Nautilus Mapping *******')
-    # mode = 2：同时生成地理位置验证和 SoL 验证的电缆映射。
-    mode = 2
-
-    print("Generate an initial mapping for each category")
-    common_utils.generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05)
-
-    print("Generating a final mapping file for each category")
-    # merge_data.common_merge_operation('stats/mapping_outputs', 1, [], ['v4'], True, None)
-
-    print("Merging the results for all categories and re-updating the categories map")
-    common_utils.generate_final_mapping(mode=mode, ip_version=ip_version, threshold=0.05)
-    common_utils.regenerate_categories_map(mode=mode, ip_version=ip_version)
+    # print('4. RPKI queries')
+    # rpki_output = whois_rpki_utils.generate_ip2as_for_list_of_ips(ip_version, list_of_ips, args=args,
+    #                                                               in_chunks=in_chunks)
+    # print(f'RPKI: Results for {len(rpki_output)} IPs')
+    #
+    # print(datetime.now(), '******* Nautilus Mapping *******')
+    # # mode = 2：同时生成地理位置验证和 SoL 验证的电缆映射。
+    # mode = 2
+    #
+    # print("Generate an initial mapping for each category")
+    # common_utils.generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05)
+    #
+    # print("Generating a final mapping file for each category")
+    # # merge_data.common_merge_operation('stats/mapping_outputs', 1, [], ['v4'], True, None)
+    #
+    # print("Merging the results for all categories and re-updating the categories map")
+    # common_utils.generate_final_mapping(mode=mode, ip_version=ip_version, threshold=0.05)
+    # common_utils.regenerate_categories_map(mode=mode, ip_version=ip_version)
