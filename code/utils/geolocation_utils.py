@@ -28,7 +28,6 @@ MaxmindLocation = namedtuple('MaxmindLocation',
                              ['city', 'subdivisions', 'country', 'accuracy_radius', 'latitude', 'longitude',
                               'autonomous_system_number', 'network'])
 LandingPoints = namedtuple('LandingPoints', ['latitude', 'longitude', 'country', 'location', 'cable'])
-
 root_dir = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root_dir))
 
