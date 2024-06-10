@@ -21,9 +21,6 @@ import geopandas as gpd
 from itertools import product
 from collections.abc import Iterable
 
-root_dir = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(root_dir))
-
 # Later update these 2 to directly take from geolocation files (under location/)
 Location = namedtuple('Location', ['city', 'subdivisions', 'country', 'accuracy_radius', 'latitude', 'longitude',
                                    'autonomous_system_number', 'network', 'ISP', 'Org'])
@@ -31,6 +28,9 @@ MaxmindLocation = namedtuple('MaxmindLocation',
                              ['city', 'subdivisions', 'country', 'accuracy_radius', 'latitude', 'longitude',
                               'autonomous_system_number', 'network'])
 LandingPoints = namedtuple('LandingPoints', ['latitude', 'longitude', 'country', 'location', 'cable'])
+
+root_dir = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(root_dir))
 
 
 def load_all_geolocation_sources(ip_version=4, tags='default'):
