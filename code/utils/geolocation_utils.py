@@ -582,7 +582,7 @@ def save_shp_file(gdf, file):
 
 
 def generate_gdf_dict():
-    shp_file_location = root_dir / 'stats/IPUMSI_world_release2020/world_countries_2020.shp'
+    shp_file_location = root_dir / 'stats/IPUMSI_world_release2024/IPUMSI_world_release2024.shp'
     save_file_location = root_dir / 'stats/mapping_outputs/country_neighbors_as_3digit_codes'
 
     if Path(save_file_location).exists():
