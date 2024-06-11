@@ -169,11 +169,13 @@ ip_version = 4
 % Generate an initial mapping for each category
 generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05)
 
-% Generating a final mapping file for each category
+% Mearge mapping results of multiple experiments for each category
 common_merge_operation('stats/mapping_outputs', 1, [], ['v4'], True, None)
 
-% Merging the results for all categories and re-updating the categories map
+% Merging the results for all categories
 generate_final_mapping(mode=mode, ip_version=ip_version, threshold=0.05)
+
+# Re-updating the categories map
 regenerate_categories_map (mode=mode, ip_version=ip_version)
 ```
 
