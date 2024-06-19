@@ -11,7 +11,10 @@ def save_caida_geolocation_output(caida_location, tags='default'):
 
 
 def get_node_to_geolocation_map():
-    ip_to_geo_map_path = root_path / 'stats/location_data/caida_ip_to_geo_map'
+    """
+    This function is used to get the IP to Geo mapping from CAIDA ITDK files
+    """
+    ip_to_geo_map_path = root_path / 'stats/location_data/caida_itdk_files/caida_ip_to_geo_map'
 
     if Path(ip_to_geo_map_path).exists():
         print(f'IP to Geo map already generated, just loading it now')

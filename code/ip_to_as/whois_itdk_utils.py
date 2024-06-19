@@ -20,7 +20,7 @@ class ITDK:
         # 设置文件根目录
         self.root_dir = root_dir
         # 设置文件输出目录，这个暂时采用硬编码
-        self.ip_to_as_path = root_directory / 'stats/location_data/caida_ip_to_as_map'
+        self.ip_to_as_path = root_directory / 'stats/ip2as_data/caida_ip_to_as_map'
         self.ip_to_geo_path = os.path.join(self.root_dir, 'ip_to_geo.csv')
         os.makedirs(self.root_dir, exist_ok=True)
         # 设置数据集的URL

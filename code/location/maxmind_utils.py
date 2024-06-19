@@ -22,7 +22,7 @@ def generate_locations_for_list_of_ips (ips_list, ip_version=4, tags='default'):
 
 	skipped_ips = []
 
-	mmdb_file = root_path / 'stats/location_data/GeoLite2-City.mmdb'
+	mmdb_file = root_path / 'stats/location_data/maxmind/GeoLite2-City.mmdb'
 
 	# Checking presence of mmdb file
 	if Path(mmdb_file).exists():
@@ -64,7 +64,7 @@ def generate_locations_for_list_of_ips (ips_list, ip_version=4, tags='default'):
 		return (maxmind_location, skipped_ips)
 
 	else:
-		print (f'File not found. The mmdb file should be downloaded from Maxmind city database and saved as stats/location_data/GeoLite2-City.mmdb')
+		print (f'File not found. The mmdb file should be downloaded from Maxmind city database and saved as stats/location_data/maxmind/GeoLite2-City.mmdb')
 		return (None, None)
 
 
