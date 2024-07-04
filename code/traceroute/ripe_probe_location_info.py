@@ -34,10 +34,16 @@ def save_probe_location_result(probe_to_coordinate_map):
         pickle.dump(probe_to_coordinate_map, fp)
 
 
-def load_probe_location_result():
+def load_probe_location_result(download=True):
     if Path(root_dir / 'stats/all_ripe_probes_ip_and_coordinates').exists():
         with open(root_dir / 'stats/all_ripe_probes_ip_and_coordinates', 'rb') as fp:
             probe_to_coordinate_map = pickle.load(fp)
+        # merge the results with the existing results
+        if download:
+            print('Downloading the latest results and merge with the existing results')
+            new_probe_to_coordinate_map = run_ripe_atlas_query_to_get_all_probe_locations()
+            probe_to_coordinate_map.update(new_probe_to_coordinate_map)
+            save_probe_location_result(probe_to_coordinate_map)
     else:
         print('File was missing, running the queries again')
         probe_to_coordinate_map = run_ripe_atlas_query_to_get_all_probe_locations()
