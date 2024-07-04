@@ -169,8 +169,6 @@ class ITDK:
         open_file.close()
         print(f"[{datetime.datetime.now()}] Load Geos Done.")
 
-        self.statistic()
-
         # 遍历拓扑字典，将每个IP地址映射到其地理信息
         print(f"[{datetime.datetime.now()}] Init IP to GEO...")
         node_ids = list(self.topo.keys())
@@ -182,6 +180,7 @@ class ITDK:
                 self.ip_to_geo[ip] = geo
             del self.topo[node_id]  # 删除已处理的拓扑项以节省内存
         print(f"[{datetime.datetime.now()}] Init IP to GEO Done.")
+        self.statistic()
 
     # 统计信息函数
     def statistic(self):
@@ -222,7 +221,7 @@ class ITDK:
                 node_id = elems[1][:-1]
                 ips = elems[3:]
                 self.node_to_ip[node_id] = ips
-        print(f'Loaded node to IP mapping: {len(self.node_to_ip)} nodes.')
+        print(f'[{datetime.datetime.now()}] Loaded node to IP mapping: {len(self.node_to_ip)} nodes.')
 
     # 加载节点到AS的映射
     def load_node_to_as(self, date):
@@ -235,14 +234,14 @@ class ITDK:
                 node_id = elems[1]
                 asn = elems[2]
                 self.as_info[node_id] = asn
-        print(f'Loaded node to AS mapping: {len(self.as_info)} nodes.')
+        print(f'[{datetime.datetime.now()}] Loaded node to AS mapping: {len(self.as_info)} nodes.')
 
     # 加载IP到AS的映射
     def load_ip_to_as(self, date):
         if os.path.exists(self.ip_to_as_path):
             with open(self.ip_to_as_path, 'rb') as file:
                 self.ip_to_as = pickle.load(file)
-            print(f'Loaded IP to AS mapping: {len(self.ip_to_as)} IPs.')
+            print(f'[{datetime.datetime.now()}] Loaded IP to AS mapping: {len(self.ip_to_as)} IPs.')
             return self.ip_to_as
 
         self.load_node_to_ip(date)
@@ -252,18 +251,18 @@ class ITDK:
             if asn:
                 for ip in ips:
                     self.ip_to_as[ip] = asn
-        print(f'Loaded IP to AS mapping: {len(self.ip_to_as)} IPs.')
+        print(f'[{datetime.datetime.now()}] Loaded IP to AS mapping: {len(self.ip_to_as)} IPs.')
         self.save_ip_to_as()
         return self.ip_to_as
 
     # 保存IP到AS的映射
     def save_ip_to_as(self):
         if not self.ip_to_as:
-            print(f"IP to AS mapping is empty.")
+            print(f"[{datetime.datetime.now()}] IP to AS mapping is empty.")
             return
         with open(self.ip_to_as_path, 'wb') as file:
             pickle.dump(self.ip_to_as, file)
-        print(f'Saved IP to AS mapping to {self.ip_to_as_path}.')
+        print(f'[{datetime.datetime.now()}] Saved IP to AS mapping to {self.ip_to_as_path}.')
 
 
 def save_whois_itdk_output(output, ip_version=4, tags='default'):
