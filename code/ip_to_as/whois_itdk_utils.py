@@ -282,7 +282,7 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=None, tags='default
         return
     whois_output = {}
     itdk = ITDK(str(root_directory / 'stats/location_data/caida_itdk_files'))
-    ip_to_as = itdk.load_ip_to_as('2022-02')
+    ip_to_as = itdk.load_ip_to_as('2023-03')
     for ip in tqdm(list_of_ips, desc='CAIDA whois', total=len(list_of_ips)):
         whois_output[ip] = ip_to_as.get(ip, None)
     save_whois_itdk_output(whois_output, ip_version, tags)
@@ -290,15 +290,13 @@ def generate_ip2as_for_list_of_ips(ip_version=4, list_of_ips=None, tags='default
 
 
 if __name__ == '__main__':
-    t1 = datetime.datetime.now()
-    print(t1)
-    ip_version = 4
-    # with open(root_directory / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
-    #     list_of_ips = pickle.load(fp)
-    list_of_ips = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
-
-    generate_ip2as_for_list_of_ips(ip_version, list_of_ips, 'default')
-
-    t2 = datetime.datetime.now()
-    print(t2)
-    print(t2 - t1)
+    # ip_version = 4
+    # # with open(root_directory / f'stats/mapping_outputs/all_ips_v{ip_version}', 'rb') as fp:
+    # #     list_of_ips = pickle.load(fp)
+    # list_of_ips = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
+    # generate_ip2as_for_list_of_ips(ip_version, list_of_ips, 'default')
+    itdk = ITDK(str(root_directory / 'stats/location_data/caida_itdk_files'))
+    itdk.download('2023-03')
+    itdk.load_ip_to_geo('2023-03')
+    itdk.save_ip_to_geo()
+    itdk.load_ip_to_as('2023-03')
