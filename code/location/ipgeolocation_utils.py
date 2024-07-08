@@ -162,7 +162,7 @@ def generate_location_for_list_of_ips(list_of_ips, args=None):
     contents = load_pre_contents(args)
 
     try:
-        for ip in tqdm(list_of_ips):
+        for ip in tqdm(list_of_ips, desc='ipgeo', disable=True):
             if ip in contents.keys():
                 continue
             response = get_ipgeolocation_response(ip)
