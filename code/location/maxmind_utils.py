@@ -59,7 +59,7 @@ def generate_locations_for_list_of_ips (ips_list, ip_version=4, tags='default'):
 
 				maxmind_location[ip_address] = location
 
-		save_maxmind_output(maxmind_location, ip_version)
+		save_maxmind_output(maxmind_location, ip_version, tags=tags)
 
 		return (maxmind_location, skipped_ips)
 

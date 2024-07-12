@@ -25,25 +25,25 @@ def construct_landing_point_location_to_id_dict():
 	return reverse_landing_points_dict, forward_landing_points_dict
 
 
-def get_latest_mapping_results():
+def get_latest_mapping_results(suffix='default'):
 
 	"""
 	Loads and returns the latest link to cable mapping results
 	"""
 
-	with open('stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v4', 'rb') as fp:
+	with open(f'stats/mapping_outputs_{suffix}/link_to_cable_and_score_mapping_sol_validated_v4', 'rb') as fp:
 		mapping = pickle.load(fp)
 
 	return mapping
 
 
-def get_latest_category_mapping_results():
+def get_latest_category_mapping_results(suffix='default'):
 
 	"""
 	Loads and returns the latest category mapping results
 	"""
 
-	with open('stats/mapping_outputs/categories_map_sol_validated_updated_v4', 'rb') as fp:
+	with open(f'stats/mapping_outputs_{suffix}/categories_map_sol_validated_updated_v4', 'rb') as fp:
 		category_mapping = pickle.load(fp)
 
 	return category_mapping

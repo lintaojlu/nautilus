@@ -266,16 +266,19 @@ def get_sorted_mean_clusters(cluster):
 
 
 def cluster_locations(locations_list):
+    """
+    This function will cluster the locations based on the DBSCAN clustering algorithm, cluster the geolocations of an IP located in different sources
+    """
     cluster = DBSCAN(eps=100 / 6371., min_samples=1, algorithm='ball_tree', metric='haversine',
                      leaf_size=2).fit_predict(np.radians(locations_list))
     return get_cluster_as_list(cluster, locations_list)
 
 
-def generate_latlon_cluster_and_score_map(all_ips, ip_version=4, mode=2, threshold=0.01):
+def generate_latlon_cluster_and_score_map(all_ips, ip_version=4, mode=2, threshold=0.01, suffix='default'):
     geolocation_latlon_cluster_and_score_map = {}
     geolocation_latlon_cluster_and_score_map_sol_validated = {}
 
-    save_directory = root_dir / 'stats/mapping_outputs'
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     # This is if we want individual sources
@@ -465,6 +468,10 @@ def get_country_alpha_to_digit():
 
 
 def get_country_continent_helper(dictionary, country_to_continent_map, country_2alpha_to_digit):
+    """
+    This function will get the country list and continent list for each IP, every ip have several geo results
+    Output format: {ip: ([countries], [percentage])}, {ip: ([continents], [percentage])}
+    """
     count = 0
     verbose = True
 
@@ -478,7 +485,7 @@ def get_country_continent_helper(dictionary, country_to_continent_map, country_2
         countries = [country_2alpha_to_digit[item['country_code']] for item in reverse_geocode_result]
         count_of_countries = len(countries)
         counter = Counter(countries)
-        country_result[ip] = [tuple(counter.keys()), tuple([item / count_of_countries for item in counter.values()])]
+        country_result[ip] = [tuple(counter.keys()), tuple([item / count_of_countries for item in counter.values()])]  # [countries, percentage]
 
         continents = [country_to_continent_map[item] for item in countries]
         count_of_continents = len(continents)
@@ -494,14 +501,14 @@ def get_country_continent_helper(dictionary, country_to_continent_map, country_2
     return country_result, continent_result
 
 
-def get_country_and_continent_clusters_for_all_ips(all_ips, ip_version=4, mode=2, sol_threshold=0.01):
+def get_country_and_continent_clusters_for_all_ips(all_ips, ip_version=4, mode=2, sol_threshold=0.01, suffix='default'):
     country_to_continent_map = get_country_to_continent_map()
     country_2alpha_to_digit = get_country_alpha_to_digit()
 
     geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated = generate_latlon_cluster_and_score_map(
-        all_ips, ip_version, mode, sol_threshold)
+        all_ips, ip_version, mode, sol_threshold, suffix)
 
-    save_directory = root_dir / 'stats/mapping_outputs'
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
     geolocation_country_cluster, geolocation_continent_cluster = {}, {}
     geolocation_country_cluster_sol_validated, geolocation_continent_cluster_sol_validated = {}, {}
@@ -523,6 +530,7 @@ def get_country_and_continent_clusters_for_all_ips(all_ips, ip_version=4, mode=2
                 geolocation_continent_cluster = pickle.load(fp)
 
         if len(geolocation_country_cluster) == 0 or len(geolocation_continent_cluster) == 0:
+            # format: {ip: ([countries], [percentage])}, {ip: ([continents], [percentage])}
             geolocation_country_cluster, geolocation_continent_cluster = get_country_continent_helper(
                 geolocation_latlon_cluster_and_score_map, country_to_continent_map, country_2alpha_to_digit)
 
@@ -580,9 +588,9 @@ def save_shp_file(gdf, file):
     return gdf.to_file(file)
 
 
-def generate_gdf_dict():
+def generate_gdf_dict(suffix='default'):
     shp_file_location = root_dir / 'stats/IPUMSI_world_release2024/IPUMSI_world_release2024.shp'
-    save_file_location = root_dir / 'stats/mapping_outputs/country_neighbors_as_3digit_codes'
+    save_file_location = root_dir / f'stats/mapping_outputs_{suffix}/country_neighbors_as_3digit_codes'
 
     if Path(save_file_location).exists():
         print('Directly loading from the saved file')
@@ -668,6 +676,11 @@ def get_iterative_neighbors(gdf_dict, country_list, index_to_country_code_map, l
 
 def generate_category_mapping_based_on_continent_data(links, geolocation_continent_cluster,
                                                       geolocation_continent_cluster_sol_validated, mode=2):
+    """
+    This function generates the category mapping based on the continent data.
+    It will check if the continents are same, or the continents are not in the submarine_cable_possibilities, then it is terrestrial.
+    If the continents are not known, then it is considered as terrestrial, as we are not sure about the oceanic part, but we are sure about the terrestrial part
+    """
     ip_is_oceanic_cable_continent_based = {}
     skipped_links = 0
     ip_is_oceanic_cable_continent_based_sol_validated = {}
@@ -690,8 +703,8 @@ def generate_category_mapping_based_on_continent_data(links, geolocation_contine
 
             if ip_con_1 and ip_con_2:
                 oc_val = 'oc'
-                combinations = list(product(ip_con_1[0], ip_con_2[0]))
-                unique_combinations = list(set([tuple(set(item)) for item in combinations]))
+                combinations = list(product(ip_con_1[0], ip_con_2[0]))  # 生成元素的所有可能的配对组合, e.g. [('AS', 'NA'), ('NA', 'AS'), ('AS', 'AS')]
+                unique_combinations = list(set([tuple(set(item)) for item in combinations]))  # 去重, e.g. [('AS', 'NA'), ('AS')]
                 for combination in unique_combinations:
                     if len(combination) == 1:
                         oc_val = 'te'
@@ -713,6 +726,7 @@ def generate_category_mapping_based_on_continent_data(links, geolocation_contine
                 combinations = list(product(ip_con_1[0], ip_con_2[0]))
                 unique_combinations = list(set([tuple(set(item)) for item in combinations]))
                 for combination in unique_combinations:
+                    # If the continents are same, then it is terrestrial, else it is oceanic
                     if len(combination) == 1:
                         oc_val = 'te'
                         break
@@ -738,7 +752,10 @@ def generate_category_mapping_based_on_continent_data(links, geolocation_contine
 
 
 def generate_category_mapping_based_on_neighbors_data(links, geolocation_country_cluster,
-                                                      geolocation_country_cluster_sol_validated, mode=2):
+                                                      geolocation_country_cluster_sol_validated, mode=2, suffix='default'):
+    """
+    This function generates the category mapping based on the neighbor data. It will check if the countries are neighbors, then it is terrestrial, else it is oceanic, if the neighbors are not known, then it is considered as terrestrial, as we are not sure about the oceanic part, but we are sure about the terrestrial part
+    """
     ip_is_oceanic_cable_neighbor_based = {}
     skipped_links = 0
     ip_is_oceanic_cable_neighbor_based_sol_validated = {}
@@ -747,7 +764,7 @@ def generate_category_mapping_based_on_neighbors_data(links, geolocation_country
     verbose = True
     count = 0
 
-    gdf_dict = generate_gdf_dict()
+    gdf_dict = generate_gdf_dict(suffix)
     index_to_country_code_map = index_to_country_code_map_gdf(gdf_dict)
 
     for ip_address_1, ip_address_2 in links:
@@ -828,7 +845,7 @@ def check_country_with_landing_points(country_list, submarine_countries):
 
 def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map,
                         geolocation_latlon_cluster_and_score_map_sol_validated, ip_version=4, mode=2,
-                        sol_threshold=0.01, geolocation_threshold=0.6, ignore=True):
+                        sol_threshold=0.01, geolocation_threshold=0.6, ignore=True, suffix='default'):
     categories_map = {
         'bg_oc': [], 'og_oc': [], 'bb_oc': [],
         'bg_te': [], 'og_te': [], 'bb_te': [],
@@ -841,7 +858,7 @@ def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map
         'de_te': []
     }
 
-    save_directory = root_dir / 'stats/mapping_outputs'
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     if mode in [0, 2]:
@@ -875,7 +892,7 @@ def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map
             mode=mode, geolocation_threshold=geolocation_threshold, ignore=ignore)
 
         geolocation_country_cluster, geolocation_continent_cluster, geolocation_country_cluster_sol_validated, geolocation_continent_cluster_sol_validated = get_country_and_continent_clusters_for_all_ips(
-            all_ips, ip_version, mode, sol_threshold)
+            all_ips, ip_version, mode, sol_threshold, suffix=suffix)
 
         submarine_countries = get_countries_with_submarine_landing_points()
 
@@ -883,7 +900,7 @@ def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map
             links, geolocation_continent_cluster, geolocation_continent_cluster_sol_validated, mode)
 
         ip_is_oceanic_cable_neighbor_based, ip_is_oceanic_cable_neighbor_based_sol_validated = generate_category_mapping_based_on_neighbors_data(
-            links, geolocation_country_cluster, geolocation_country_cluster_sol_validated, mode)
+            links, geolocation_country_cluster, geolocation_country_cluster_sol_validated, mode, suffix=suffix)
 
         if mode in [0, 2]:
 
@@ -943,10 +960,12 @@ def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map
                                 country_1 = country_1[0]
                                 country_2 = country_2[0]
 
+                            # If both countries are not in the submarine countries, then it's a terrestrial link
                             if check_country_with_landing_points(country_1, submarine_countries) and \
                                     check_country_with_landing_points(country_2, submarine_countries):
                                 categories_map['de_te'].append(ip_addresses)
                             else:
+                                # If it's not a terrestrial link, then we can add it to the respective category
                                 categories_map['{}_te'.format(latlon_category)].append(ip_addresses)
 
             if mode in [1, 2]:
@@ -972,6 +991,7 @@ def generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map
                                 country_1 = country_1[0]
                                 country_2 = country_2[0]
 
+                            # If both countries are not in the submarine countries, then it's a deterministic terrestrial link
                             if check_country_with_landing_points(country_1, submarine_countries) and \
                                     check_country_with_landing_points(country_2, submarine_countries):
                                 categories_map_sol_validated['de_te'].append(ip_addresses)
@@ -1036,20 +1056,20 @@ def get_country_3c_codes(country_digit_tuple, country_3d_to_3c_dict):
         return ('xxx', 'xxx')
 
 
-def get_top_country_continent_pairs(ip_version=4):
-    with open(root_dir / 'stats/mapping_outputs/geolocation_country_cluster_sol_validated_v{}'.format(ip_version),
+def get_top_country_continent_pairs(ip_version=4, suffix='default'):
+    with open(root_dir / 'stats/mapping_outputs_{}/geolocation_country_cluster_sol_validated_v{}'.format(suffix, ip_version),
               'rb') as fp:
         geolocation_country_code_cluster_map = pickle.load(fp)
 
-    with open(root_dir / 'stats/mapping_outputs/geolocation_continent_cluster_sol_validated_v{}'.format(ip_version),
+    with open(root_dir / 'stats/mapping_outputs_{}/geolocation_continent_cluster_sol_validated_v{}'.format(suffix, ip_version),
               'rb') as fp:
         geolocation_continent_cluster_map = pickle.load(fp)
 
-    with open(root_dir / 'stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v{}'.format(ip_version),
+    with open(root_dir / 'stats/mapping_outputs_{}/link_to_cable_and_score_mapping_sol_validated_v{}'.format(suffix, ip_version),
               'rb') as fp:
         final_mapping_output = pickle.load(fp)
 
-    with open(root_dir / 'stats/mapping_outputs/categories_map_sol_validated_updated_v{}'.format(ip_version),
+    with open(root_dir / 'stats/mapping_outputs_{}/categories_map_sol_validated_updated_v{}'.format(suffix, ip_version),
               'rb') as fp:
         categories_map = pickle.load(fp)
 
@@ -1178,7 +1198,7 @@ def get_top_country_continent_pairs(ip_version=4):
     for key, value in sorted_continent_pairs_count.items():
         print(f'{key}: {value}')
 
-    with open(root_dir / 'stats/mapping_outputs/country_pairs_links', 'wb') as fp:
+    with open(root_dir / f'stats/mapping_outputs_{suffix}/country_pairs_links', 'wb') as fp:
         pickle.dump(country_pairs_links, fp)
 
 

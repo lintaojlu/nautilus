@@ -122,10 +122,9 @@ def get_ipgeolocation_response(ip):
 
 
 def load_pre_contents(args):
-    tags = args.get('tags', 'default')
     ip_version = args.get('ip_version')
 
-    save_file = f'ipgeolocation_file_v{ip_version}_{tags}'
+    save_file = f'ipgeolocation_file_v{ip_version}'
 
     save_directory = root_dir / 'stats/location_data/iplocation_files'
 
@@ -141,10 +140,9 @@ def load_pre_contents(args):
 
 
 def save_contents_to_file(contents, args):
-    tags = args.get('tags', 'default')
     ip_version = args.get('ip_version', 4)
 
-    save_file = f'ipgeolocation_file_v{ip_version}_{tags}'
+    save_file = f'ipgeolocation_file_v{ip_version}'
 
     save_directory = root_dir / 'stats/location_data/iplocation_files'
 
@@ -165,6 +163,7 @@ def generate_location_for_list_of_ips(list_of_ips, args=None):
         for ip in tqdm(list_of_ips, desc='ipgeo', ncols=50):
             if ip in contents.keys():
                 continue
+            # sample response: {'ip': [Location(), ]}
             response = get_ipgeolocation_response(ip)
             if not response:
                 print(f'Looks like we encountered some error. Lets give up !!')
@@ -190,4 +189,7 @@ if __name__ == '__main__':
     # for ip in tqdm(list_of_ips):
     #     res = get_ipgeolocation_response(ip)
     #     print(res)
-    generate_location_for_list_of_ips(list_of_ips, args)
+    # generate_location_for_list_of_ips(list_of_ips, args)
+    for ip in tqdm(list_of_ips, desc='ipgeo', ncols=50):
+        res = get_ipgeolocation_response(ip)
+        print(res)

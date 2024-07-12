@@ -48,7 +48,7 @@ def add_tags(dictionary, code):
         dictionary[key].append(code)
 
 
-def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
+def generate_links_and_ips_from_all_sources(ip_version=4, manual=False, suffix='default'):
     # We will automatically take the last file
     if not manual:
         # First let's do it for CAIDA
@@ -61,7 +61,7 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         count = 0
 
         for file in caida_file:
-            if 'uniq' in file:
+            if 'uniq' in file and suffix in file:
                 count += 1
                 print(f'Loading CAIDA file: {file}')
                 with open(file, 'rb') as fp:
@@ -76,7 +76,8 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         # Let's save this CAIDA dict for future uses
         if count > 1:
             print('Dumping the output for future use')
-            with open(caida_directory / 'uniq_ip_dict_caida_all_links_v{}_merged'.format(ip_version), 'wb') as fp:
+            with open(caida_directory / 'uniq_ip_dict_caida_all_links_v{}_{}_merged'.format(ip_version, suffix),
+                      'wb') as fp:
                 pickle.dump(caida_dict, fp)
 
         merge_ab_and_ba_links(caida_dict)
@@ -93,7 +94,9 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
 
         for msm in msm_id:
             ripe_files = os.listdir(ripe_directory)
-            ripe_files = [file for file in ripe_files if 'uniq' in file and str(msm) in file]
+            ripe_files = [file for file in ripe_files if 'uniq' in file and str(msm) in file and suffix in file]
+            if len(ripe_files) == 0:
+                ripe_dicts.append({})
             for ripe_file in ripe_files:
                 print(f'Loading file: {ripe_file}')
                 with open(ripe_directory / ripe_file, 'rb') as fp:
@@ -148,10 +151,10 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
 
         merge_ab_and_ba_links(traceroute_dict, None, 1)
         # Let's save the entire output and only the links as 2 files
-        save_directory = root_dir / 'stats/mapping_outputs'
+        save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
         save_directory.mkdir(parents=True, exist_ok=True)
         links = list(traceroute_dict.keys())
-        save_file = 'full_processed_traceroute_output_v{}'.format(ip_version)
+        save_file = 'full_processed_traceroute_output_v{}_{}'.format(ip_version, suffix)
         save_results_to_file(traceroute_dict, str(save_directory), save_file)
 
         # Let's delete traceroute dict so save memory
@@ -170,7 +173,7 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         uniq_ips_list = list(uniq_ips)
         save_file = 'all_ips_v{}'.format(ip_version)
         save_results_to_file(uniq_ips_list, str(save_directory), save_file)
-        print(f'# of all links are {len(traceroute_dict)}')
+        print(f'# of all links are {len(links)}')
         print(f'# of uniq IPs are {len(uniq_ips_list)}')
         return links, uniq_ips_list
 
@@ -179,8 +182,8 @@ def generate_links_and_ips_from_all_sources(ip_version=4, manual=False):
         return None
 
 
-def load_all_links_and_ips_data(ip_version=4):
-    save_directory = root_dir / 'stats/mapping_outputs'
+def load_all_links_and_ips_data(ip_version=4, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     links, uniq_ips_list = [], []
@@ -198,13 +201,13 @@ def load_all_links_and_ips_data(ip_version=4):
             uniq_ips_list = pickle.load(fp)
 
     if len(links) == 0 or len(uniq_ips_list) == 0:
-        links, uniq_ips_list = generate_links_and_ips_from_all_sources(ip_version)
+        links, uniq_ips_list = generate_links_and_ips_from_all_sources(ip_version, suffix=suffix)
 
     return links, uniq_ips_list
 
 
-def generate_test_case_links_and_ips_data(ip_version=4):
-    save_directory = root_dir / 'stats/mapping_outputs'
+def generate_test_case_links_and_ips_data(ip_version=4, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
     save_file = 'test_links_v{}'.format(ip_version)
 

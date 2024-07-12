@@ -2,11 +2,12 @@ import pickle, re
 from pathlib import Path
 
 import os, sys
-sys.path.insert(1, os.path.abspath('.'))
+root_dir = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(root_dir))
 
-def load_final_cable_mapping_files(mode=2, ip_version=4):
+def load_final_cable_mapping_files(mode=2, ip_version=4, suffix='default'):
 
-	save_directory = Path.cwd() / 'stats/mapping_outputs'
+	save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
 	link_to_cable_score_mapping, link_to_cable_score_mapping_sol_validated = {}, {}
 	
@@ -32,9 +33,9 @@ def load_final_cable_mapping_files(mode=2, ip_version=4):
 
 
 
-def load_final_category_map_files(mode=2, ip_version=4):
+def load_final_category_map_files(mode=2, ip_version=4, suffix='default'):
 
-	save_directory = Path.cwd() / 'stats/mapping_outputs'
+	save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
 	categories_map, categories_map_sol_validated = {}, {}
 	
@@ -56,7 +57,7 @@ def load_final_category_map_files(mode=2, ip_version=4):
 			print (f'Required category mapping file not found. Generate it!!!')
 			sys.exit(1)
 
-	return categories_map, link_to_cable_score_mapping_sol_validated
+	return categories_map, categories_map_sol_validated
 
 
 
@@ -102,8 +103,9 @@ def generate_text_files_for_score_and_count_plotting_helper (link_to_cable_score
 			cable_count_map[category]['6-10'] = current_count
 
 	# Now let's write the outputs to a file
-	save_directory = Path.cwd() / 'plot_results'
+	save_directory = root_dir / 'plot_results'
 	save_directory.mkdir(parents=True, exist_ok=True)
+	print(f'make dir: {save_directory}')
 
 	all_scores_file = 'all_scores_{}v{}.txt'.format(tags, ip_version)
 
@@ -155,4 +157,4 @@ def generate_text_files_for_score_and_count_plotting(mode=2, ip_version=4, tags=
 
 if __name__ == '__main__':
 
-	generate_text_files_for_score_and_count_plotting(mode=1, ip_version=4, tags='541_')
+	generate_text_files_for_score_and_count_plotting(mode=2, ip_version=4, tags='')

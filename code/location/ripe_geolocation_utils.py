@@ -61,7 +61,7 @@ def generate_location_for_list_of_ips_ripe (ips_list, ip_version=4, tags='defaul
 		if geolocation:
 			ripe_location[ip] = geolocation
 
-	save_ripe_location_output(ripe_location, ip_version)
+	save_ripe_location_output(ripe_location, ip_version, tags=tags)
 
 	return ripe_location
 

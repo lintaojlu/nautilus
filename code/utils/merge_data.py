@@ -111,6 +111,7 @@ def merge_cable_mapping_results_for_each_category(directory, list_of_files=[], k
 
 
 def merge_iplocation_net_results(directory, list_of_files=[], keywords=[], save_results=True, save_file_name=None):
+    print(f'Starting merging the results for {directory}')
     iplocation_merged_result = {}
     files = Path(directory).glob('*')
 
@@ -124,12 +125,14 @@ def merge_iplocation_net_results(directory, list_of_files=[], keywords=[], save_
 
     if len(iplocation_merged_result) > 0 and save_results:
         if save_file_name == None:
-            save_file_name = directory + '/../iplocation_location_output_v4_default'
+            save_file_name = directory / 'iplocation_location_output_v4_default'
         else:
-            save_file_name = directory + '/../' + save_file_name
+            save_file_name = directory.parent / save_file_name
 
         with open(save_file_name, 'wb') as fp:
             pickle.dump(iplocation_merged_result, fp)
+        print(f'Saving at {save_file_name}')
+
 
 
 def merge_caida_uniq_dicts(directory, list_of_files=[], keywords=[], save_results=True, save_file_name=None):

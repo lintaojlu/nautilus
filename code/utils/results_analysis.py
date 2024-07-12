@@ -1,42 +1,43 @@
 import pickle
+import sys
 from pathlib import Path
 
-def load_cable_mapping_output (ip_version=4):
-
-	with open('stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v{}'.format(ip_version), 'rb') as fp:
-		cable_mapping = pickle.load(fp)
-
-	return cable_mapping
+root_dir = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(root_dir))
 
 
-def number_of_cables_and_landing_points_mapped (cable_mapping):
+def load_cable_mapping_output(ip_version=4, suffix='default'):
+    with open(root_dir / 'stats/mapping_outputs_{}/link_to_cable_and_score_mapping_sol_validated_v{}'.format(suffix, ip_version),
+              'rb') as fp:
+        cable_mapping = pickle.load(fp)
 
-	all_cables = []
-	all_landing_points = []
-	count = 0
-
-	for link, mapping in cable_mapping.items():
-		all_cables.extend(mapping[1])
-		if len(mapping[1]) == 0:
-			count += 1
-		for cable_landing_points in mapping[-2]:
-			for landing_points in cable_landing_points:
-				all_landing_points.extend(landing_points)
+    return cable_mapping
 
 
-	uniq_cables = list(set(all_cables))
+def number_of_cables_and_landing_points_mapped(cable_mapping):
+    all_cables = []
+    all_landing_points = []
+    count = 0
 
-	print (f'We have mapping for {len(uniq_cables)} cables')
+    for link, mapping in cable_mapping.items():
+        all_cables.extend(mapping[1])
+        if len(mapping[1]) == 0:
+            count += 1
+        for cable_landing_points in mapping[-2]:
+            for landing_points in cable_landing_points:
+                all_landing_points.extend(landing_points)
 
-	uniq_landing_points = list(set(all_landing_points))
+    uniq_cables = list(set(all_cables))
 
-	print (f'We have mapping for {len(uniq_landing_points)} landing points')
+    print(f'We have mapping for {len(uniq_cables)} cables')
 
-	print (f'We have mapping for {(1 - (count/len(cable_mapping))) * 100} links')
+    uniq_landing_points = list(set(all_landing_points))
+
+    print(f'We have mapping for {len(uniq_landing_points)} landing points')
+
+    print(f'We have mapping for {(1 - (count / len(cable_mapping))) * 100}% links')
 
 
 if __name__ == '__main__':
-
-	cable_mapping = load_cable_mapping_output()
-	number_of_cables_and_landing_points_mapped(cable_mapping)
-
+    cable_mapping = load_cable_mapping_output()
+    number_of_cables_and_landing_points_mapped(cable_mapping)

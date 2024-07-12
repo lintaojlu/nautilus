@@ -4,7 +4,8 @@ import subprocess
 
 import os, sys
 
-sys.path.insert(1, os.path.abspath('.'))
+root_dir = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(root_dir))
 
 from code.utils.merge_data import save_results_to_file
 from collections import namedtuple
@@ -19,7 +20,6 @@ import math
 import numpy as np
 from itertools import product
 from haversine import haversine, Unit
-root_dir = Path(__file__).resolve().parents[2]
 
 Cable = namedtuple('Cable', ['name', 'landing_points', 'length', 'owners', 'notes', 'rfs', 'other_info'])
 
@@ -53,10 +53,10 @@ def get_submarine_owners():
 
 
 def load_required_files(all_ips, links, mode=2, ip_version=4, sol_threshold=0.01, geolocation_threshold=0.6,
-                        ignore=True):
+                        ignore=True, suffix='default'):
     # Ideally we want to load things straight away in which case we don't need all_ips and links
     geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated = generate_latlon_cluster_and_score_map(
-        all_ips, ip_version=ip_version, mode=mode, threshold=sol_threshold)
+        all_ips, ip_version=ip_version, mode=mode, threshold=sol_threshold, suffix=suffix)
 
     categories_map, categories_map_sol_validated = generate_categories(all_ips, links,
                                                                        geolocation_latlon_cluster_and_score_map,
@@ -64,7 +64,7 @@ def load_required_files(all_ips, links, mode=2, ip_version=4, sol_threshold=0.01
                                                                        ip_version=ip_version, mode=mode,
                                                                        sol_threshold=sol_threshold,
                                                                        geolocation_threshold=geolocation_threshold,
-                                                                       ignore=ignore)
+                                                                       ignore=ignore, suffix=suffix)
 
     return geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated, categories_map, categories_map_sol_validated
 
@@ -105,10 +105,12 @@ def get_cable_for_given_latlon_pair(latlon_pair, tree, scores_pair, future_cable
                               tree.query_radius(radians_latlon_pair, current_radius / 6371, return_distance=True,
                                                 sort_results=True)))
         for index_pairs, dist_pairs in zip(product(ind[0], ind[1]), product(dist[0], dist[1])):
+            # 遍历这些对，如果索引不相同，获取对应的登陆点信息。
             if index_pairs[0] != index_pairs[1]:
                 landing_point_1, landing_point_2 = get_landing_point_info(index_pairs[0], landing_points_dict,
                                                                           latlon_dict, latlons), get_landing_point_info(
                     index_pairs[1], landing_points_dict, latlon_dict, latlons)
+                # 找到两个登陆点的交集海缆。不会判断连接关系，只要是同一条海缆上的两个登陆站就默认为相连
                 cables = find_intersecting_cables(landing_point_1.cable, landing_point_2.cable)
                 cables = [cable for cable in cables if cable not in future_cables]
                 if len(cables) > 0:
@@ -146,8 +148,8 @@ def update_score_tuple(list_of_tuples_from_geolocation, owner_score_tuple):
 
 def generate_cable_mapping_for_given_category(category_links, latlon_cluster_and_score_map, category, tree,
                                               future_cables, closest_submarine_org, submarine_owners_dict, cable_dict,
-                                              landing_points_dict, latlon_dict, latlons, save_file=None):
-    save_directory = root_dir / 'stats/mapping_outputs'
+                                              landing_points_dict, latlon_dict, latlons, save_file=None, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     cable_mapping = {}
@@ -213,7 +215,7 @@ def generate_cable_mapping_for_given_category(category_links, latlon_cluster_and
 
 def general_cable_mapping_helper(categories_map, latlon_cluster_and_score_map, tree, future_cables,
                                  closest_submarine_org, submarine_owners_dict, cable_dict, landing_points_dict,
-                                 latlon_dict, latlons, max_links_to_process=None, server_id=None, mode=0, ip_version=4):
+                                 latlon_dict, latlons, max_links_to_process=None, server_id=None, mode=0, ip_version=4, suffix='default'):
     cable_mapping_all_categories = {}
 
     for category in categories_map:
@@ -239,7 +241,7 @@ def general_cable_mapping_helper(categories_map, latlon_cluster_and_score_map, t
                                                                           category, tree, future_cables,
                                                                           closest_submarine_org, submarine_owners_dict,
                                                                           cable_dict, landing_points_dict, latlon_dict,
-                                                                          latlons, save_file)
+                                                                          latlons, save_file, suffix)
 
             else:
                 save_file = 'cable_mapping_sol_validated_{}_v{}'.format(category, ip_version)
@@ -250,7 +252,7 @@ def general_cable_mapping_helper(categories_map, latlon_cluster_and_score_map, t
                                                                           category, tree, future_cables,
                                                                           closest_submarine_org, submarine_owners_dict,
                                                                           cable_dict, landing_points_dict, latlon_dict,
-                                                                          latlons, save_file)
+                                                                          latlons, save_file, suffix)
 
             cable_mapping_all_categories[category] = cable_mapping
 
@@ -258,18 +260,22 @@ def general_cable_mapping_helper(categories_map, latlon_cluster_and_score_map, t
 
 
 def generate_cable_mapping(max_links_to_process=None, max_links_to_process_sol_validated=None, server_id=None, mode=2,
-                           ip_version=4, sol_threshold=0.01, geolocation_threshold=0.6, ignore=True):
+                           ip_version=4, sol_threshold=0.01, geolocation_threshold=0.6, ignore=True, suffix='default'):
+    """
+    This function generates the cable mapping for all the categories
+    :param mode: The mode to process the links, 0 - Only geolocation, 1 - SoL validated geolocation, 2 - Generate both results
+    """
     links, all_ips = load_all_links_and_ips_data(ip_version=ip_version)
     geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated, categories_map, categories_map_sol_validated = load_required_files(
         all_ips, links, mode=mode, ip_version=ip_version, sol_threshold=sol_threshold,
-        geolocation_threshold=geolocation_threshold, ignore=ignore)
+        geolocation_threshold=geolocation_threshold, ignore=ignore, suffix=suffix)
 
     cable_dict = get_cable_details()
     future_cables = get_future_cables(cable_dict)
     submarine_owners_dict = get_submarine_owners()
     landing_points_dict, latlon_dict, latlons, tree = get_all_latlon_locations_ball_tree()
 
-    closest_submarine_org = generate_closest_submarine_org(all_ips, ip_version=ip_version)
+    closest_submarine_org = generate_closest_submarine_org(all_ips, ip_version=ip_version, suffix=suffix)
 
     cable_mapping, cable_mapping_sol_validated = {}, {}
 
@@ -280,7 +286,7 @@ def generate_cable_mapping(max_links_to_process=None, max_links_to_process_sol_v
                                                      cable_dict,
                                                      landing_points_dict, latlon_dict, latlons,
                                                      max_links_to_process=max_links_to_process, server_id=server_id,
-                                                     mode=0, ip_version=ip_version)
+                                                     mode=0, ip_version=ip_version, suffix=suffix)
 
     if mode in [1, 2]:
         print(f'Currently processing mode : {mode}')
@@ -291,24 +297,24 @@ def generate_cable_mapping(max_links_to_process=None, max_links_to_process_sol_v
                                                                    landing_points_dict, latlon_dict, latlons,
                                                                    max_links_to_process=max_links_to_process_sol_validated,
                                                                    server_id=server_id,
-                                                                   mode=1, ip_version=ip_version)
+                                                                   mode=1, ip_version=ip_version, suffix=suffix)
 
     return cable_mapping, cable_mapping_sol_validated
 
 
 def generate_cable_mapping_test(mode=2, ip_version=4, sol_threshold=0.01, geolocation_threshold=0.6, ignore=True,
-                                max_links_to_process=None, max_links_to_process_sol_validated=None, server_id=None):
+                                max_links_to_process=None, max_links_to_process_sol_validated=None, server_id=None, suffix='default'):
     links, all_ips = generate_test_case_links_and_ips_data(ip_version=ip_version)
     geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated, categories_map, categories_map_sol_validated = load_required_files(
         all_ips, links, mode=mode, ip_version=ip_version, sol_threshold=sol_threshold,
-        geolocation_threshold=geolocation_threshold, ignore=ignore)
+        geolocation_threshold=geolocation_threshold, ignore=ignore, suffix=suffix)
 
     cable_dict = get_cable_details()
     future_cables = get_future_cables(cable_dict)
     submarine_owners_dict = get_submarine_owners()
     landing_points_dict, latlon_dict, latlons, tree = get_all_latlon_locations_ball_tree()
 
-    closest_submarine_org = generate_closest_submarine_org(all_ips, ip_version=ip_version)
+    closest_submarine_org = generate_closest_submarine_org(all_ips, ip_version=ip_version, suffix=suffix)
 
     cable_mapping, cable_mapping_sol_validated = {}, {}
 
@@ -335,8 +341,8 @@ def generate_cable_mapping_test(mode=2, ip_version=4, sol_threshold=0.01, geoloc
     return cable_mapping, cable_mapping_sol_validated
 
 
-def get_load_all_cable_mapping_merged_output(mode=2, ip_version=4):
-    save_directory = root_dir / 'stats/mapping_outputs'
+def get_load_all_cable_mapping_merged_output(mode=2, ip_version=4, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
     categories = ['bg_oc', 'og_oc', 'bb_oc', 'bg_te', 'og_te', 'bb_te']
 
@@ -430,6 +436,7 @@ def assign_overall_score(score_tuple, weight_tuple, category):
 
 def select_cables_for_given_link(link, scores_and_cables, weight_tuple, de_te_additions, cable_to_lp_ids, category,
                                  reverse_landing_points_dict, threshold=0.05):
+    """检查映射出的登陆站是否相连"""
     ret_dict = {}
 
     # de_te_additions to take note of all links that are getting re-classified as definite terrestrial
@@ -466,7 +473,7 @@ def select_cables_for_given_link(link, scores_and_cables, weight_tuple, de_te_ad
     if len(ret_dict) > 0:
         return {k: v for k, v in sorted(ret_dict.items(), key=lambda item: item[1][0][1], reverse=True)}, 0
     else:
-        if res == True:  # Means that we never went inside if score_for_tuple (otherwise, if we went inside and got res = True, then length won't be 0)
+        if res == True:
             de_te_additions.append(link)
             return {}, 1
         return {}, 0
@@ -530,12 +537,12 @@ def generate_final_mapping_helper(cable_mapping, de_te_additions, cable_to_lp_id
     return link_to_cable_and_score_mapping
 
 
-def generate_final_mapping(mode=2, ip_version=4, threshold=0.05):
-    save_directory = root_dir / 'stats/mapping_outputs'
+def generate_final_mapping(mode=2, ip_version=4, threshold=0.05, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
     # Let's first load all the merged output for each category
     cable_mapping, cable_mapping_sol_validated = get_load_all_cable_mapping_merged_output(mode=mode,
-                                                                                          ip_version=ip_version)
+                                                                                          ip_version=ip_version, suffix=suffix)
 
     # Loading the cable to connected landing points dict
     cable_to_lp_ids = load_cable_to_lp_ids()
@@ -575,8 +582,8 @@ def generate_final_mapping(mode=2, ip_version=4, threshold=0.05):
 # return link_to_cable_and_score_mapping, de_te_additions, link_to_cable_and_score_mapping_sol_validated, de_te_additions_sol_validated
 
 
-def generate_final_mapping_test(cable_mapping, cable_mapping_sol_validated, mode=2, ip_version=4, threshold=0.05):
-    save_directory = root_dir / 'stats/mapping_outputs'
+def generate_final_mapping_test(cable_mapping, cable_mapping_sol_validated, mode=2, ip_version=4, threshold=0.05, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
     # Loading the cable to connected landing points dict
     cable_to_lp_ids = load_cable_to_lp_ids()
@@ -631,8 +638,8 @@ def regenerate_categories_map_helper(categories_map, de_te_additions, ip_version
     return new_categories_map
 
 
-def regenerate_categories_map(mode=2, ip_version=4):
-    save_directory = root_dir / 'stats/mapping_outputs'
+def regenerate_categories_map(mode=2, ip_version=4, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
 
     if mode in [0, 2]:
         with open(save_directory / 'categories_map_v{}'.format(ip_version), 'rb') as fp:
@@ -663,6 +670,8 @@ if __name__ == '__main__':
     operation = str(sys.argv[1])
 
     if operation == 'g':
+        # general
+        # max_links_to_process 和 max_links_to_process_sol_validated 参数限制处理的链接数量，以便进行分块处理和并行计算。
         mode = int(sys.argv[2])
         ip_version = int(sys.argv[3])
         server_id = int(sys.argv[4])
@@ -686,15 +695,18 @@ if __name__ == '__main__':
                                                                             sol_threshold=0.05)
 
     if operation == 'n':
+        # 普通版本，不用管那么多参数
         mode = int(sys.argv[2])
         ip_version = int(sys.argv[3])
         _, cable_mapping_sol_validated = generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05)
 
     if operation == 'f':
+        # final mapping
         generate_final_mapping(mode=1, ip_version=4, threshold=0.05)
         regenerate_categories_map(mode=1, ip_version=4)
 
     if operation == 't':
+        # test
         cable_mapping, cable_mapping_sol_validated = generate_cable_mapping_test(mode=2, ip_version=4,
                                                                                  sol_threshold=0.05,
                                                                                  geolocation_threshold=0.6, ignore=True,

@@ -426,7 +426,7 @@ def generate_asn_list_given_best_org_match(best_match_org, all_matches, asn_to_c
     return list(set(asn_list))
 
 
-def get_best_fit_caida_org_name_for_submarine_owner():
+def get_best_fit_caida_org_name_for_submarine_owner(suffix):
     submarine_owners, cable_dict, landing_points_dict, asn_data, asnlinks_data = load_submarine_and_asn_data()
     submarine_org_to_country_map = get_country_for_each_operator(submarine_owners, cable_dict, landing_points_dict)
 
@@ -621,7 +621,7 @@ def get_best_fit_caida_org_name_for_submarine_owner():
     print(f'Example length of Orange : {len(submarine_owner_to_asn_list["Orange"])}')
 
     # Let's save the results for future use
-    save_directory = root_dir / 'stats/mapping_outputs'
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     save_file = 'submarine_owner_to_asn_list'
@@ -632,8 +632,8 @@ def get_best_fit_caida_org_name_for_submarine_owner():
     return submarine_owner_to_asn_list
 
 
-def generate_closest_submarine_org(all_ips, ip_version=4):
-    save_directory = root_dir / 'stats/mapping_outputs'
+def generate_closest_submarine_org(all_ips, ip_version=4, suffix='default'):
+    save_directory = root_dir / f'stats/mapping_outputs_{suffix}'
     save_directory.mkdir(parents=True, exist_ok=True)
 
     ip_to_closest_submarine_org_file = 'ip_to_closest_submarine_org_v{}'.format(ip_version)
@@ -653,7 +653,7 @@ def generate_closest_submarine_org(all_ips, ip_version=4):
             with open(save_directory / submarine_owner_to_asn_list_file, 'rb') as fp:
                 submarine_owner_to_asn_list = pickle.load(fp)
         else:
-            submarine_owner_to_asn_list = get_best_fit_caida_org_name_for_submarine_owner()
+            submarine_owner_to_asn_list = get_best_fit_caida_org_name_for_submarine_owner(suffix)
 
         # Constructing a reverse dict for easier lookup
         asn_to_submarine_owner_map = {}

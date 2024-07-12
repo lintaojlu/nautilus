@@ -297,7 +297,7 @@ def geolocation_sol_validation_caida (file_traceroute, initial_lat_lon,
 
 
 
-def caida_process_traceroutes (year, month, cycle_id, ip_version=4, download_count=1000, geolocation_validation=False):
+def caida_process_traceroutes (year, month, cycle_id, ip_version=4, download_count=1000, geolocation_validation=False, suffix='default'):
 
 	"""
 	This function puts all things together
@@ -328,7 +328,7 @@ def caida_process_traceroutes (year, month, cycle_id, ip_version=4, download_cou
 
 		print ('Loading all geolocation sources')
 
-		maxmind_output, ripe_output, caida_output, iplocation_output = load_all_geolocation_info(ip_version)
+		maxmind_output, ripe_output, caida_output, iplocation_output = load_all_geolocation_info(ip_version, tags=suffix)
 
 		print ('Successfully loaded all geolocation results')
 

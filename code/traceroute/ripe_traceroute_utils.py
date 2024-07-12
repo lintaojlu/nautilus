@@ -306,7 +306,7 @@ def get_ripe_hops(traceroute, v4=True):
     return return_hops, actual_count, conditional_count
 
 
-def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocation_validation=False):
+def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocation_validation=False, suffix='default', update_probe_info=True):
     """
     This function puts it all together
     (1) Get the raw traceroutes first
@@ -334,11 +334,11 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
         print(f'First loading probe to coordinate map')
 
-        probe_to_coordinate_map = load_probe_location_result()
+        probe_to_coordinate_map = load_probe_location_result(update_probe_info)
 
         print('Loading all geolocation sources')
 
-        maxmind_output, ripe_output, caida_output, iplocation_output = load_all_geolocation_info(ip_version)
+        maxmind_output, ripe_output, caida_output, iplocation_output = load_all_geolocation_info(ip_version, tags=suffix)
 
         print('Successfully loaded all geolocation results')
 
@@ -375,9 +375,7 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
             print(
                 f'Our current ip_location_with_penalty_and_total_count length is {len(ip_location_with_penalty_and_total_count)}')
 
-            print(f'Lets save the current result')
-
-            with open(root_dir / 'stats/location_data/ripe_validated_ip_locations_v{}_{}'.format(ip_version, msm_id),
+            with open(root_dir / 'stats/location_data/ripe_validated_ip_locations_v{}_{}_{}'.format(ip_version, msm_id, suffix),
                       'wb') as fp:
                 pickle.dump(ip_location_with_penalty_and_total_count, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -413,7 +411,7 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
     print(f'Total number of raw traceroutes is {raw_traceroute_number}')
     print(f'Total number of processed traceroutes is {processed_traceroute_number}')
     print(f'Total number of the links is {len(links_dict)}')
-    file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_{start_time}_{end_time}'
+    file_name = f'uniq_ip_dict_{msm_id}_all_links_v{ip_version}_min_all_latencies_only_{suffix}'
     save_file = parent_dir / file_name
     with open(save_file, 'wb') as fp:
         pickle.dump(links_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
@@ -424,13 +422,14 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
 
 if __name__ == '__main__':
     s_time = datetime(2024, 5, 1, 0)
-    e_time = datetime(2024, 5, 1, 1)
+    e_time = datetime(2024, 5, 2, 0)
 
     # The measurement ids used are 5051 and 5151 for v4 and 6052 and 6152 for v6
     # The number (6) in example below indicates the IP version, which will be according to the measurement IDs
     # That number is mostly used for just saving the results
 
-    result = ripe_process_traceroutes(s_time, e_time, '5051', 4, False)
-    print(f'Result length is {len(result)}')
-    # result = ripe_process_traceroutes(s_time, e_time, '5151', 4, False)
+    # result = ripe_process_traceroutes(s_time, e_time, '5051', 4, False)
     # print(f'Result length is {len(result)}')
+    result = ripe_process_traceroutes(s_time, e_time, '5051', 4, True)
+    print(f'Result length is {len(result)}')
+

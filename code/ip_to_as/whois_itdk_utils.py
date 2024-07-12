@@ -33,6 +33,7 @@ class ITDK:
         self.node_to_ip = dict()
         self.as_info = dict()
         self.ip_to_as = dict()
+        print(f'[{datetime.datetime.now()}] ITDK Initialized.')
 
     # 下载指定日期的ITDK数据
     def download(self, date, kapar=False):

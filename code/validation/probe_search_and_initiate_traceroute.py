@@ -53,9 +53,9 @@ def load_cables_info():
 
 
 
-def get_asn_to_submarine_owners_mapping():
+def get_asn_to_submarine_owners_mapping(suffix='default'):
 
-	save_file = Path.cwd() / 'stats/mapping_outputs/submarine_owner_to_asn_list'
+	save_file = Path.cwd() / f'stats/mapping_outputs_{suffix}/submarine_owner_to_asn_list'
 
 	if Path(save_file).exists():
 		with open(save_file, 'rb') as fp:
@@ -279,16 +279,16 @@ def generate_cable_measurements (cable_probe_search, ripe_api_key, custom_term):
 
 
 
-def generate_asns_pairs_across_landing_points (landing_points):
+def generate_asns_pairs_across_landing_points (landing_points, suffix='default'):
 
-	with open('stats/mapping_outputs/all_ips_v4', 'rb') as fp:
+	with open(f'stats/mapping_outputs_{suffix}/all_ips_v4', 'rb') as fp:
 		all_ips = pickle.load(fp)
 
 	ip_to_asn_dict = get_ip_to_asn_for_all_ips(all_ips)
 
 	print ('Loading the cable mapping')
 
-	with open('stats/mapping_outputs/link_to_cable_and_score_mapping_sol_validated_v4', 'rb') as fp:
+	with open(f'stats/mapping_outputs_{suffix}/link_to_cable_and_score_mapping_sol_validated_v4', 'rb') as fp:
 		cable_mapping = pickle.load(fp)
 
 
@@ -455,9 +455,9 @@ def run_ripe_query_for_all_probe_locations():
 	return asn_to_probe_id_map, probe_to_coordinate_map
 
 
-def load_latlon_closest_submarine_and_category_info():
+def load_latlon_closest_submarine_and_category_info(suffix='default'):
 
-	save_directory = Path.cwd() / 'stats/mapping_outputs'
+	save_directory = Path.cwd() / f'stats/mapping_outputs_{suffix}'
 
 	categories_map_file = 'categories_map_sol_validated_v4'
 

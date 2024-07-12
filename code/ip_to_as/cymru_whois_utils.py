@@ -33,10 +33,12 @@ def resume_operation(ip_version=4, tags='default'):
         with open(save_file, 'rb') as fp:
             cymru_output = pickle.load(fp)
         start_index = len(cymru_output)
+        print(f'Resuming operation from index {start_index} for {ip_version} version IPs')
 
     else:
         cymru_output = {}
         start_index = 0
+        print(f'No previous data found for {ip_version} version IPs, starting fresh operation')
 
     return cymru_output, start_index
 
@@ -46,7 +48,7 @@ def generate_ip2as_for_list_of_ips(ips_list, ip_version=4, tags='default'):
 
     cymru_client = Client()
 
-    cymru_output, start_index = resume_operation(tags)
+    cymru_output, start_index = resume_operation(ip_version, tags)
 
     count = start_index
 
@@ -61,18 +63,19 @@ def generate_ip2as_for_list_of_ips(ips_list, ip_version=4, tags='default'):
             print(f'Current start index is {start_index}')
             try:
                 records = cymru_client.lookupmany(ips_list[start_index:])
-                for record in tqdm(records, total=len(records), desc='Cymru whois'):
+                for record in tqdm(records, desc='Cymru whois'):
                     cymru_output[ips_list[count]] = (record.owner, record.asn)
                     count += 1
                     if count % 10000 == 0:
                         print(f'Processed {count} entries')
+                        save_cymru_whois_output(cymru_output, ip_version, tags)
                 start_index = count
             except Exception as e:
                 print(f'Got error : {str(e)}')
                 print(f'Currently we have processed {len(cymru_output)} IPs and we have encountered an error')
                 print(f'Lets do a partial save with count {count}')
 
-                save_cymru_whois_output(cymru_output, tags)
+                save_cymru_whois_output(cymru_output, ip_version, tags)
 
                 # It is possible that this particular IP is causing the issue, let's skip it over
                 print(f'We are skipping {ips_list[count]} potentially because it could be the issue')

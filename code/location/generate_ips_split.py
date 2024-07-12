@@ -5,9 +5,9 @@ import pickle
 from pathlib import Path
 from location.ipgeolocation_utils import Location
 
-def generate_split_for_parallel_processing (ip_version=4, exclude_files=[], single_file_length = 4500):
+def generate_split_for_parallel_processing (ip_version=4, exclude_files=[], single_file_length = 4500, suffix='default'):
 
-	with open('stats/mapping_outputs/all_ips_v{}'.format(ip_version), 'rb') as fp:
+	with open('stats/mapping_outputs_{}/all_ips_v{}'.format(suffix, ip_version), 'rb') as fp:
 		all_ips = pickle.load(fp)
 
 	print (f'We have {len(all_ips)} IPs in total')

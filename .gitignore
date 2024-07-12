@@ -4,3 +4,11 @@
 /IPUMSI_world_release2024.zip
 .DS_Store
 code/test.py
+/stats_20240501_20240502.zip
+/code/ips_to_monitor.txt
+/code/link_cable_mapping.csv
+/plot_results/
+*.png
+*.jpg
+*pycache*
+/code/monitor/

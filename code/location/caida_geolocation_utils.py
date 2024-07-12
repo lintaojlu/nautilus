@@ -104,7 +104,7 @@ def generate_location_for_list_of_ips(ips_list, tags='default'):
         if geolocation:
             caida_location[ip] = geolocation
 
-    save_caida_geolocation_output(caida_location)
+    save_caida_geolocation_output(caida_location, tags=tags)
 
     return caida_location
 
