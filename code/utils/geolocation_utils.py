@@ -70,19 +70,20 @@ def load_all_geolocation_sources(ip_version=4, tags='default'):
         sys.exit(1)
 
 
-def load_sol_validated_file(ip_version=4):
+def load_sol_validated_file(ip_version=4, tags='default'):
     # If SoL validation is done, we can eliminate some of the incorrect location sources
 
     directory = root_dir / 'stats/location_data'
 
-    file = f'{directory}/all_validated_ip_location_v{ip_version}'
+    file = f'{directory}/all_validated_ip_location_v{ip_version}_{tags}'
 
     result = None
 
     if not Path(file).exists():
         result = common_merge_operation(root_dir / 'stats/location_data', 0, [],
-                                        [f'validated_ip_locations_v{ip_version}'], True,
-                                        f'all_validated_ip_location_v{ip_version}')
+                                        [f'validated_ip_locations_v{ip_version}_5051_{tags}', f'validated_ip_locations_v{ip_version}_5151_{tags}', f'validated_ip_locations_v{ip_version}_caida_{tags}'],
+                                        True,
+                                        f'all_validated_ip_location_v{ip_version}_{tags}')
     else:
         print(f'Directly loading the saved SoL file from all sources')
         with open(file, 'rb') as fp:
@@ -178,7 +179,12 @@ def get_latitude_longitude_info_for_all_ips_sol_validated(all_ips, sol_validated
         if sol_validated_ip_val:
             location_index = sol_validated_ip_val['location_index']
             coordinates = sol_validated_ip_val['coordinates']
+            # for each ip-geo location source
+            # 改了ipgeolocation为ip2location后，实际用道德source从11变成了4，但这个代码不需要改。
+            # 因为虽然会循环11次，但是没有定位结果的source的total_count都为0，所以并不会有输出
             for index, total_count in enumerate(sol_validated_ip_val['total_count']):
+                # print(f'For IP {ip}, we have {total_count} results from source {index}')
+                # input(f'For IP {ip}, we have {sol_validated_ip_val["penalty_count"][index]} results from source {index} that did not pass SoL test')
 
                 # Checking if we got any location info from this geolocation service
                 if total_count > 0:
@@ -187,6 +193,7 @@ def get_latitude_longitude_info_for_all_ips_sol_validated(all_ips, sol_validated
                     coordinate_index = location_index.index(index)
 
                     # Checking if it satisfies the SoL threshold check
+                    # 这个source（index）对于IP的定位，用没通过sol的结果数量除以总结果数量，如果小于阈值，就认为这个source的结果是好的
                     if (sol_validated_ip_val['penalty_count'][index] / total_count) <= threshold:
                         ip_result.append(coordinates[coordinate_index])
 
@@ -200,13 +207,13 @@ def get_latitude_longitude_info_for_all_ips_sol_validated(all_ips, sol_validated
             if len(ip_result_negative) > 0:
                 ip_to_latlon_dict_negative[ip] = ip_result_negative
 
-    print(f'We have results for {len(ip_to_latlon_dict)} IPs where atleast 1 source has satisifed SoL constraints')
+    print(f'We have results for {len(ip_to_latlon_dict)} IPs where at least 1 source has satisifed SoL constraints')
     print(f'There are {len(ip_to_latlon_dict_negative)} IPs for which no source satisifed SoL constraints')
 
     return ip_to_latlon_dict, ip_to_latlon_dict_negative
 
 
-def get_latitude_longitude_info_for_all_ips(all_ips, ip_version=4, mode=2, threshold=0.01):
+def get_latitude_longitude_info_for_all_ips(all_ips, ip_version=4, mode=2, threshold=0.01, suffix='default'):
     # Modes 0 -> only geolocation sources, 1 -> only SoL validated, 2 -> both
 
     ripe_ip_to_location_dict = load_all_probe_ip_to_locations()
@@ -215,7 +222,7 @@ def get_latitude_longitude_info_for_all_ips(all_ips, ip_version=4, mode=2, thres
 
     if mode in [0, 2]:
         ripe_location_dict, caida_location_dict, maxmind_location_dict, iplocation_dict = load_all_geolocation_sources(
-            ip_version)
+            ip_version, suffix)
         ip_to_latlon_dict_geolocation = get_latitude_longitude_info_for_all_ips_only_geolocation_sources(all_ips,
                                                                                                          ripe_location_dict,
                                                                                                          caida_location_dict,
@@ -232,7 +239,7 @@ def get_latitude_longitude_info_for_all_ips(all_ips, ip_version=4, mode=2, thres
         ip_to_latlon_dict_geolocation.update(ripe_ip_to_location_dict)
 
     if mode in [1, 2]:
-        sol_validated_result = load_sol_validated_file(ip_version)
+        sol_validated_result = load_sol_validated_file(ip_version,tags=suffix)
         ip_to_latlon_dict_sol, ip_to_latlon_dict_negative_sol = get_latitude_longitude_info_for_all_ips_sol_validated(
             all_ips, sol_validated_result, threshold)
 
@@ -295,7 +302,7 @@ def generate_latlon_cluster_and_score_map(all_ips, ip_version=4, mode=2, thresho
         else:
 
             ip_to_latlon_dict_geolocation, _, _ = get_latitude_longitude_info_for_all_ips(all_ips, ip_version, 0,
-                                                                                          threshold)
+                                                                                          threshold, suffix)
 
             if len(ip_to_latlon_dict_geolocation) > 0:
 
@@ -318,42 +325,43 @@ def generate_latlon_cluster_and_score_map(all_ips, ip_version=4, mode=2, thresho
 
         save_file = 'geolocation_latlon_cluster_and_score_map_sol_validated_v{}'.format(ip_version)
 
-        if Path(save_directory / save_file).is_file():
+        # TODO - Need to check if the file is already present and load it
+        # if Path(save_directory / save_file).is_file():
+        #
+        #     print(f'Directly loading the saved file contents')
+        #     with open(save_directory / save_file, 'rb') as fp:
+        #         geolocation_latlon_cluster_and_score_map_sol_validated = pickle.load(fp)
 
-            print(f'Directly loading the saved file contents')
-            with open(save_directory / save_file, 'rb') as fp:
-                geolocation_latlon_cluster_and_score_map_sol_validated = pickle.load(fp)
+        # else:
 
-        else:
+        _, ip_to_latlon_dict_sol, ip_to_latlon_dict_negative_sol = get_latitude_longitude_info_for_all_ips(all_ips,
+                                                                                                           ip_version,
+                                                                                                           1,
+                                                                                                           threshold, suffix)
 
-            _, ip_to_latlon_dict_sol, ip_to_latlon_dict_negative_sol = get_latitude_longitude_info_for_all_ips(all_ips,
-                                                                                                               ip_version,
-                                                                                                               1,
-                                                                                                               threshold)
+        if len(ip_to_latlon_dict_sol) > 0:
 
-            if len(ip_to_latlon_dict_sol) > 0:
-
-                for count, ip in enumerate(all_ips):
-                    locations_list = ip_to_latlon_dict_sol.get(ip, None)
+            for count, ip in enumerate(all_ips):
+                locations_list = ip_to_latlon_dict_sol.get(ip, None)
+                if locations_list:
+                    con_cluster, len_cluster = cluster_locations(locations_list)
+                    geolocation_latlon_cluster_and_score_map_sol_validated[ip] = (con_cluster, len_cluster, 0)
+                else:
+                    # Maybe none of the sources had good geolocation, let's get from the bad ones and add a penalty later
+                    locations_list = ip_to_latlon_dict_negative_sol.get(ip, None)
                     if locations_list:
                         con_cluster, len_cluster = cluster_locations(locations_list)
-                        geolocation_latlon_cluster_and_score_map_sol_validated[ip] = (con_cluster, len_cluster, 0)
-                    else:
-                        # Maybe none of the sources had good geolocation, let's get from the bad ones and add a penalty later
-                        locations_list = ip_to_latlon_dict_negative_sol.get(ip, None)
-                        if locations_list:
-                            con_cluster, len_cluster = cluster_locations(locations_list)
-                            geolocation_latlon_cluster_and_score_map_sol_validated[ip] = (con_cluster, len_cluster, 1)
+                        geolocation_latlon_cluster_and_score_map_sol_validated[ip] = (con_cluster, len_cluster, 1)
 
-                if len(geolocation_latlon_cluster_and_score_map_sol_validated) > 0:
-                    print(
-                        f'We have clusters and scores (SoL) for {len(geolocation_latlon_cluster_and_score_map_sol_validated)} IPs')
-                    save_results_to_file(geolocation_latlon_cluster_and_score_map_sol_validated, str(save_directory),
-                                         save_file)
+            if len(geolocation_latlon_cluster_and_score_map_sol_validated) > 0:
+                print(
+                    f'We have clusters and scores (SoL) for {len(geolocation_latlon_cluster_and_score_map_sol_validated)} IPs')
+                save_results_to_file(geolocation_latlon_cluster_and_score_map_sol_validated, str(save_directory),
+                                     save_file)
 
-                # Deleting finished variables to save memory
-                del (ip_to_latlon_dict_sol)
-                del (ip_to_latlon_dict_negative_sol)
+            # Deleting finished variables to save memory
+            del (ip_to_latlon_dict_sol)
+            del (ip_to_latlon_dict_negative_sol)
 
     return geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated
 
@@ -1202,18 +1210,18 @@ def get_top_country_continent_pairs(ip_version=4, suffix='default'):
         pickle.dump(country_pairs_links, fp)
 
 
-if __name__ == '__main__':
-    links, all_ips = load_all_links_and_ips_data(ip_version=6)
-
-    geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated = generate_latlon_cluster_and_score_map(
-        all_ips, ip_version=6, mode=2, threshold=0.05)
-
-    generate_initial_category_mapping_for_geolocation(links, geolocation_latlon_cluster_and_score_map,
-                                                      geolocation_latlon_cluster_and_score_map_sol_validated, mode=2,
-                                                      geolocation_threshold=0.6, ignore=True)
-
-    generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map,
-                        geolocation_latlon_cluster_and_score_map_sol_validated, ip_version=6, mode=2,
-                        sol_threshold=0.05, geolocation_threshold=0.6, ignore=True)
+# if __name__ == '__main__':
+#     links, all_ips = load_all_links_and_ips_data(ip_version=6)
+#
+#     geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated = generate_latlon_cluster_and_score_map(
+#         all_ips, ip_version=6, mode=2, threshold=0.05)
+#
+#     generate_initial_category_mapping_for_geolocation(links, geolocation_latlon_cluster_and_score_map,
+#                                                       geolocation_latlon_cluster_and_score_map_sol_validated, mode=2,
+#                                                       geolocation_threshold=0.6, ignore=True)
+#
+#     generate_categories(all_ips, links, geolocation_latlon_cluster_and_score_map,
+#                         geolocation_latlon_cluster_and_score_map_sol_validated, ip_version=6, mode=2,
+#                         sol_threshold=0.05, geolocation_threshold=0.6, ignore=True)
 
 # get_top_country_continent_pairs(ip_version=4)

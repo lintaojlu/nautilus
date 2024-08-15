@@ -34,15 +34,19 @@ def save_probe_location_result(probe_to_coordinate_map):
         pickle.dump(probe_to_coordinate_map, fp)
 
 
-def load_probe_location_result(download=True):
+def load_probe_location_result(download=False):
     if Path(root_dir / 'stats/all_ripe_probes_ip_and_coordinates').exists():
         with open(root_dir / 'stats/all_ripe_probes_ip_and_coordinates', 'rb') as fp:
             probe_to_coordinate_map = pickle.load(fp)
+            print(f'Loaded results for {len(probe_to_coordinate_map)} probes')
+            print(f'Example: {list(probe_to_coordinate_map.items())[:5]}')
         # merge the results with the existing results
         if download:
             print('Downloading the latest results and merge with the existing results')
             new_probe_to_coordinate_map = run_ripe_atlas_query_to_get_all_probe_locations()
+            print(f'New results for {len(new_probe_to_coordinate_map)} probes')
             probe_to_coordinate_map.update(new_probe_to_coordinate_map)
+            print(f'After merging, we have results for {len(probe_to_coordinate_map)} probes')
             save_probe_location_result(probe_to_coordinate_map)
     else:
         print('File was missing, running the queries again')
@@ -53,11 +57,6 @@ def load_probe_location_result(download=True):
 
 
 if __name__ == '__main__':
-    probe_to_coordinate_map = run_ripe_atlas_query_to_get_all_probe_locations()
-
-    print(f'We have results for {len(probe_to_coordinate_map)} probes and we are saving results now')
-
-    save_probe_location_result(probe_to_coordinate_map)
 
     print('Loading the results to verify')
 

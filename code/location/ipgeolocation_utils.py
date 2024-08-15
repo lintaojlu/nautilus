@@ -116,7 +116,7 @@ def get_ipgeolocation_response(ip):
                 # results.append((source, f"Error: {str(e)}"))
                 continue
 
-    # 根据source的顺序对结果进行排序，只保留result[1]
+    # 根据source的顺序对结果进行排序，只保留result[1]，即Location对象
     results = [result[1] for result in sorted(results, key=lambda x: sources.index(x[0]))]
     return results
 

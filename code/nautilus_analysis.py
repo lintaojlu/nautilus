@@ -270,9 +270,9 @@ def filter_links_higher_than_score(links, score_thresh=0.5):
     return links_higher_than_score
 
 
-def get_ip_to_org_for_all_ips(ips):
+def get_ip_to_org_for_all_ips(ips, suffix='default'):
     # ip to asn
-    ip_to_asn = get_ip_to_asn_for_all_ips(ips)
+    ip_to_asn = get_ip_to_asn_for_all_ips(ips, suffix)
     print(f'IP to ASN dict length: {len(ip_to_asn)}')
 
     # asn raw data
@@ -314,10 +314,10 @@ def get_ip_to_org_for_all_ips(ips):
     return ip_to_orgs
 
 
-def validate_links_by_isp(links, isp_name, isp_cables: list):
+def validate_links_by_isp(links, isp_name, isp_cables: list, suffix='default'):
     ips = get_ips_of_links(links)
     print('###### Get IP to Org for all IPs ######')
-    ip_to_orgs = get_ip_to_org_for_all_ips(ips)
+    ip_to_orgs = get_ip_to_org_for_all_ips(ips, suffix)
     print('###### Done IP to Org ######')
 
     links_isp = filter_links_with_org_name(links, ip_to_orgs, isp_name)
@@ -776,7 +776,8 @@ def analyze_and_validate_by_isp(links, isp_name):
     # print()
 
     print(f'Validating links by ISP `{isp_name}`(xx_oc)')
-    links_isp, links_validated, links_uncorrected = validate_links_by_isp(links_oc, isp_name, isp_cables)
+    links_isp, links_validated, links_uncorrected = validate_links_by_isp(links_oc, isp_name, isp_cables,
+                                                                          suffix='default')
 
     # save links of the isp to csv
     # links_isp = filter_links_higher_than_score(links_isp, 0.4)
@@ -852,22 +853,125 @@ def get_ips_to_monitor(links):
     save_ips_from_link_cable_mapping(links, 'ips_to_monitor.txt')
 
 
-if __name__ == '__main__':
-    # isp = 'TATA'
-    # # isp = 'China Telecom'
-    # links_path = root_dir / 'stats' / 'mapping_outputs' / 'link_to_cable_and_score_mapping_sol_validated_v4'
-    # # links_path = '/home/lintao/scinfer/data/result/link/mine_scored.pkl'
-    # print(f'Loading link cable mapping from {links_path}')
-    # # format: {(8.8.8.8,10.10.10.10): 3, [sc1, faster, jupiter], [0.9, 0.8, 0.7], [[[lp1, lp2], [lp2], [lp3]], [[lp2], [lp3]], []], category}
-    # links_cable_mapping = load_link_cable_mapping(links_path)
-    # print(f'Link cable mapping length: {len(links_cable_mapping)}')
-    # # links_cable_mapping = filter_links_higher_than_score(links_cable_mapping, 0)
-    # print(f'Link cable mapping length of score higher than 0: {len(links_cable_mapping)}')
-    # analyze_and_validate_by_isp(links_cable_mapping, isp)
-    # # visualize_cables_on_map(links_cable_mapping)
-    #
-    # # get_ips_to_monitor(links_cable_mapping)
-    data = load_link_cable_mapping(root_dir/ 'stats' / 'mapping_outputs' / 'cable_mapping_bg_oc_v4')
-    for k, v in data.items():
-        print(k, v)
-        input('continue')
+def compare_nautilus_mapping_result(file_path1, file_path2):
+    data1 = load_link_cable_mapping(file_path1)
+    data2 = load_link_cable_mapping(file_path2)
+
+    total_links = 0
+    matching_links = 0
+    differing_links = 0
+    differences = []
+
+    common_links = set(data1.keys()).intersection(set(data2.keys()))
+    total_links = len(common_links)
+
+    for link in common_links:
+        first_cable1 = data1[link][1][0] if data1[link][1] else None
+        first_cable2 = data2[link][1][0] if data2[link][1] else None
+        if first_cable1 == first_cable2:
+            matching_links += 1
+        else:
+            differing_links += 1
+            differences.append(
+                f"Differences in first inferred cable for link {link}:\n    data1: {first_cable1}\n    data2: {first_cable2}")
+
+    if total_links > 0:
+        matching_ratio = matching_links / total_links
+        differing_ratio = differing_links / total_links
+        print(f"Total links compared: {total_links}")
+        print(f"Matching links: {matching_links} ({matching_ratio:.2%})")
+        print(f"Differing links: {differing_links} ({differing_ratio:.2%})")
+    else:
+        print("No common links found between the two data files.")
+
+    if differences:
+        print(f"\nDifferences in first inferred submarine cables found: {len(differences)}")
+        # for diff in differences:
+        #     print(diff)
+    else:
+        print("No differences in first inferred submarine cables found.")
+
+
+def filter_link_results(path_list, out_path):
+    """
+    筛选推断结果一致或者是唯一的条目，以及分类为bg_oc的条目，并保存到final_mapping中。
+    :param path_list: 需要读取的文件路径列表
+    :param out_path: 筛选结果保存路径
+    """
+    all_mappings = []
+
+    # 读取所有文件并合并结果
+    for path in path_list:
+        try:
+            mapping = load_link_cable_mapping(path)
+            all_mappings.append(mapping)
+            print(f'Successfully loaded mapping from {path}')
+        except Exception as e:
+            print(f'Failed to load mapping from {path}: {e}')
+
+    print(f'Total mappings loaded: {len(all_mappings)}')
+
+    # 合并所有mapping
+    combined_mapping = {}
+    for mapping in all_mappings:
+        for link_id, result in mapping.items():
+            if link_id not in combined_mapping:
+                combined_mapping[link_id] = []
+            combined_mapping[link_id].append(result)
+
+    print(f'Total unique link_ids in combined mapping: {len(combined_mapping)}')
+
+    # 筛选推断结果一致或者是唯一的条目
+    filtered_mapping = {}
+    for link_id, results in combined_mapping.items():
+        unique_selected_cables = {result[1][0] for result in results if len(result[1]) > 0}
+        if len(unique_selected_cables) == 1:
+            filtered_mapping[link_id] = results[0]
+
+    print(f'Total link_ids with consistent or unique results: {len(filtered_mapping)}')
+
+    # 筛选分类为bg_oc的条目
+    final_mapping = {}
+    for link_id, result in filtered_mapping.items():
+        if result[-1] == 'bg_oc':
+            final_mapping[link_id] = result
+
+    print(f'Total link_ids with category "bg_oc": {len(final_mapping)}')
+
+    # 保存筛选结果到文件
+    with open(out_path, 'wb') as file:
+        pickle.dump(final_mapping, file)
+
+    print(f'Filtered results saved to {out_path}')
+
+
+# isp = 'TATA'
+# # isp = 'China Telecom'
+# links_path = root_dir / 'stats' / 'mapping_outputs' / 'link_to_cable_and_score_mapping_sol_validated_v4'
+# # links_path = '/home/lintao/scinfer/data/result/link/mine_scored.pkl'
+# print(f'Loading link cable mapping from {links_path}')
+# # format: {(8.8.8.8,10.10.10.10): 3, [sc1, faster, jupiter], [0.9, 0.8, 0.7], [[[lp1, lp2], [lp2], [lp3]], [[lp2], [lp3]], []], category}
+# links_cable_mapping = load_link_cable_mapping(links_path)
+# print(f'Link cable mapping length: {len(links_cable_mapping)}')
+# # links_cable_mapping = filter_links_higher_than_score(links_cable_mapping, 0)
+# print(f'Link cable mapping length of score higher than 0: {len(links_cable_mapping)}')
+# analyze_and_validate_by_isp(links_cable_mapping, isp)
+# # visualize_cables_on_map(links_cable_mapping)
+#
+# # get_ips_to_monitor(links_cable_mapping)
+# data = load_link_cable_mapping(
+#     root_dir / 'stats' / 'mapping_outputs' / 'link_to_cable_and_score_mapping_sol_validated_v4(0501)')
+# for k, v in data.items():
+#     print(k, v)
+#     input('continue')
+
+# path1 = root_dir / 'stats' / 'mapping_outputs_2024-05-01_2024-05-02' / 'link_to_cable_and_score_mapping_sol_validated_v4_(iplocation)'
+# path2 = root_dir / 'stats' / 'mapping_outputs_2024-05-01_2024-05-02' / 'link_to_cable_and_score_mapping_sol_validated_v4'
+# compare_nautilus_mapping_result(path1, path2)
+
+
+path_list = [
+    root_dir / 'stats' / 'mapping_outputs_2024-05-01_2024-05-02' / 'link_to_cable_and_score_mapping_sol_validated_v4']
+    # root_dir / 'stats' / 'mapping_outputs_2024-06-01_2024-06-02' / 'link_to_cable_and_score_mapping_sol_validated_v4',
+    # root_dir / 'stats' / 'mapping_outputs_2024-07-01_2024-07-02' / 'link_to_cable_and_score_mapping_sol_validated_v4']
+filter_link_results(path_list, root_dir / 'stats' / 'test.pkl')

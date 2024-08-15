@@ -51,18 +51,25 @@ def load_all_geolocation_info(ip_version=4, tags='default'):
 
 def extract_latlon_and_perform_sol_test(location, initial_lat_lon, rtt, index=0):
     # index is used to determine the source of geolocation
-
     try:
         if index <= 7:
+            # This is for the 8 sources of IPGEOLOCATION
+            # sources = [
+            #     "ip2location", "ipinfo", "dbip", "ipregistry",
+            #     "ipgeolocation", "ipapico", "ipbase", "criminalip"
+            # ]
             latitude = float(location.latitude.decode())
             longitude = float(location.longitude.decode())
         elif index == 8:
+            # This is for the maxmind source
             latitude = location.latitude
             longitude = location.longitude
         elif index == 9:
+            # This is for the RIPE source
             latitude = float(location[2])
             longitude = float(location[3])
         elif index == 10:
+            # This is for the CAIDA source
             latitude = float(location[3])
             longitude = float(location[4])
 
@@ -89,6 +96,8 @@ def fill_locations_dict_scores(prev_examined_location, status,
 
     # First checking validity of latitude and longitude
     if latitude and longitude:
+        # penalty count is a list of 11 elements, each element corresponding to a geolocation source, aiming to keep track of how many times we failed the SoL test
+        # total count is a list of 11 elements, each element corresponding to a geolocation source, aiming to keep track of how many times we have examined this IP
         # If previous examined, it means we already populated the dict, now we just need to update the scores
         if prev_examined_location:
             current_contents = ip_location_with_penalty_and_total_count.get(ip, None)

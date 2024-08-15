@@ -131,12 +131,12 @@ def load_submarine_and_asn_data():
     return submarine_owners, cable_dict, landing_points_dict, asn_data, asnlinks_data
 
 
-def get_ip_to_asn_for_all_ips(all_ips, ip_version=4):
+def get_ip_to_asn_for_all_ips(all_ips, ip_version=4, suffix='default'):
     ip_to_asn_dict = {}
     missed = 0
     individual_missed = [0, 0, 0, 0]
 
-    rpki_asn_dict, caida_asn_dict, radb_asn_dict, cymru_asn_dict = load_all_ip_to_asn_sources(ip_version=ip_version)
+    rpki_asn_dict, caida_asn_dict, radb_asn_dict, cymru_asn_dict = load_all_ip_to_asn_sources(ip_version=ip_version, tags=suffix)
 
     for count, ip in enumerate(all_ips):
         result = []
@@ -663,7 +663,7 @@ def generate_closest_submarine_org(all_ips, ip_version=4, suffix='default'):
                 current_owners.append(submarine_owner)
                 asn_to_submarine_owner_map[asn] = current_owners
 
-        ip_to_asn_dict = get_ip_to_asn_for_all_ips(all_ips, ip_version=ip_version)
+        ip_to_asn_dict = get_ip_to_asn_for_all_ips(all_ips, ip_version=ip_version, suffix=suffix)
 
         for ip, asn in ip_to_asn_dict.items():
             owner = asn_to_submarine_owner_map.get(asn, None)
@@ -681,7 +681,7 @@ def generate_closest_submarine_org(all_ips, ip_version=4, suffix='default'):
     return ip_to_closest_submarine_org
 
 
-if __name__ == '__main__':
-    links, all_ips = load_all_links_and_ips_data(ip_version=4)
-
-    generate_closest_submarine_org(all_ips, ip_version=4)
+# if __name__ == '__main__':
+#     links, all_ips = load_all_links_and_ips_data(ip_version=4)
+#
+#     generate_closest_submarine_org(all_ips, ip_version=4)

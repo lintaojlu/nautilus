@@ -286,9 +286,9 @@ def generate_test_case_links_and_ips_data(ip_version=4, suffix='default'):
 
         return test_links, uniq_ips_list
 
-
-if __name__ == '__main__':
-    # Let's first load the data from CAIDA
-    load_all_links_and_ips_data(ip_version=4)
+#
+# if __name__ == '__main__':
+#     # Let's first load the data from CAIDA
+#     load_all_links_and_ips_data(ip_version=4)
 
 # test_links, uniq_ips_list = generate_test_case_links_and_ips_data(ip_version=4)

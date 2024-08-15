@@ -112,13 +112,13 @@ def load_cymru_whois_output(ip_version=4, tags='default', ips_list=[]):
     return cymru_output
 
 
-if __name__ == '__main__':
-    # ips_list = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
-
-    _, sample_ips_list = load_all_links_and_ips_data(ip_version=4)
-
-    print(f'Length of IPs data : {len(sample_ips_list)}')
-
-    cymru_output = generate_ip2as_for_list_of_ips(sample_ips_list, 4)
-
-    print(f'We have results for {len(cymru_output)} IPs')
+# if __name__ == '__main__':
+#     # ips_list = ['66.85.82.9', '156.225.182.1', '67.59.254.241', '103.78.227.1', '193.34.197.140', '23.111.226.1', '193.0.214.1', '152.255.147.235', '216.19.218.1']
+#
+#     _, sample_ips_list = load_all_links_and_ips_data(ip_version=4)
+#
+#     print(f'Length of IPs data : {len(sample_ips_list)}')
+#
+#     cymru_output = generate_ip2as_for_list_of_ips(sample_ips_list, 4)
+#
+#     print(f'We have results for {len(cymru_output)} IPs')

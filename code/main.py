@@ -100,7 +100,7 @@ def main(args):
         print('******* Generating the traceroutes *******')
         for msm_id in msm_ids:
             result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, False,
-                                                                    suffix=suffix)
+                                                                    suffix=suffix, update_probe_info=False)
 
     print('******* Generating/getting all the unique IPs and links *******')
     links, ips_list = traceroute_utils.load_all_links_and_ips_data(ip_version=ip_version, suffix=suffix)
@@ -129,23 +129,25 @@ def main(args):
     for p in processes:
         p.join()
 
-    print('******* SoL validation *******')
-    for msm_id in msm_ids:
-        result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, True,
-                                                                suffix=suffix, update_probe_info=True)
-        print(f'Result length for {msm_id} is {len(result)}')
+
+    if not args.no_sol:
+        print('******* SoL validation *******')
+        for msm_id in msm_ids:
+            result = ripe_traceroute_utils.ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, True,
+                                                                    suffix=suffix, update_probe_info=False)
+            print(f'Result length for {msm_id} is {len(result)}')
 
     print('******* Nautilus Mapping *******')
-    mode = 2
+    mode = 1
 
     print("Generate an initial mapping for each category")
     common_utils.generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05, suffix=suffix)
     print("Merge mapping results of multiple experiments for each category")
     merge_data.common_merge_operation(root_dir / f'stats/mapping_outputs_{suffix}', 1, [], ['v4'], True, None)
     print("Merging the results for all categories")
-    common_utils.generate_final_mapping(mode=mode, ip_version=ip_version, threshold=0.05)
-    print("Re-updating the categories map")
-    common_utils.regenerate_categories_map(mode=mode, ip_version=ip_version, suffix=suffix)
+    common_utils.generate_final_mapping(mode=mode, ip_version=ip_version, threshold=0.05, suffix=suffix)
+    # print("Re-updating the categories map")
+    # common_utils.regenerate_categories_map(mode=mode, ip_version=ip_version, suffix=suffix)
     print("Done")
 
 
@@ -155,6 +157,7 @@ if __name__ == '__main__':
     parser.add_argument('--no_traceroute', action='store_true', help='Skip generating the traceroutes')
     parser.add_argument('--no_ipgeo', action='store_true', help='Skip geolocation processes')
     parser.add_argument('--no_ip2as', action='store_true', help='Skip IP to AS mapping processes')
+    parser.add_argument('--no_sol', action='store_true', help='Skip SoL validation')
 
     args = parser.parse_args()
     main(args)

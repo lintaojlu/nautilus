@@ -226,8 +226,13 @@ def geolocation_sol_validation_ripe(updated_traceroute_output, probe_to_coordina
 
                     prev_examined_location = ip_location_with_penalty_and_total_count.get(ip, None)
 
+                    # 如果有定位结果，即location不是None，就进行SoL测试
                     if locations:
+                        # We have multiple locations for ipgeolocation module, let's iterate over them
                         for ind, location in enumerate(locations):
+                            # extract the latitude and longitude and perform SoL test
+                            # status is True if we passed the SoL test
+                            # latitude and longitude can be None if we failed to get the location
                             status, (latitude, longitude) = extract_latlon_and_perform_sol_test(location,
                                                                                                 initial_lat_lon, rtt,
                                                                                                 ind)
@@ -306,7 +311,7 @@ def get_ripe_hops(traceroute, v4=True):
     return return_hops, actual_count, conditional_count
 
 
-def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocation_validation=False, suffix='default', update_probe_info=True):
+def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocation_validation=False, suffix='default', update_probe_info=False):
     """
     This function puts it all together
     (1) Get the raw traceroutes first
@@ -382,6 +387,7 @@ def ripe_process_traceroutes(start_time, end_time, msm_id, ip_version, geolocati
             print(f'Finished saving the results')
 
         print('Stage 3 : Identifying the big jumps and storing in a dictionary')
+        # TODO 这里的latency计算算法可能可以借用
         for index, traceroute in enumerate(updated_traceroute_output):
 
             ripe_hops, actual_ripe_hops, conditional_ripe_hops = get_ripe_hops(traceroute, v4)

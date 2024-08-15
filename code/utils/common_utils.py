@@ -170,6 +170,7 @@ def generate_cable_mapping_for_given_category(category_links, latlon_cluster_and
             scores_cable_map = update_dict(scores_cable_map, cables)
 
         org_1 = closest_submarine_org.get(ip_1, None)
+        # input(closest_submarine_org)
         org_2 = closest_submarine_org.get(ip_2, None)
 
         org_1_cables_names, org_2_cables_names = [], []
@@ -178,13 +179,21 @@ def generate_cable_mapping_for_given_category(category_links, latlon_cluster_and
             org_1_cables, org_2_cables = [], []
             if org_1:
                 for org in org_1:
-                    org_1_cables.extend(submarine_owners_dict[org])
+                    # input(submarine_owners_dict)
+                    # todo 不知道为什么submarine_owners_dict没有arelion的asn，先这样吧。
+                    try:
+                        org_1_cables.extend(submarine_owners_dict[org])
+                    except:
+                        continue
                 for cable in org_1_cables:
                     org_1_cables_names.append(cable_dict[cable].name)
 
             if org_2:
                 for org in org_2:
-                    org_2_cables.extend(submarine_owners_dict[org])
+                    try:
+                        org_2_cables.extend(submarine_owners_dict[org])
+                    except:
+                        continue
                 for cable in org_2_cables:
                     org_2_cables_names.append(cable_dict[cable].name)
 
@@ -265,7 +274,7 @@ def generate_cable_mapping(max_links_to_process=None, max_links_to_process_sol_v
     This function generates the cable mapping for all the categories
     :param mode: The mode to process the links, 0 - Only geolocation, 1 - SoL validated geolocation, 2 - Generate both results
     """
-    links, all_ips = load_all_links_and_ips_data(ip_version=ip_version)
+    links, all_ips = load_all_links_and_ips_data(ip_version=ip_version, suffix=suffix)
     geolocation_latlon_cluster_and_score_map, geolocation_latlon_cluster_and_score_map_sol_validated, categories_map, categories_map_sol_validated = load_required_files(
         all_ips, links, mode=mode, ip_version=ip_version, sol_threshold=sol_threshold,
         geolocation_threshold=geolocation_threshold, ignore=ignore, suffix=suffix)
@@ -665,52 +674,52 @@ def regenerate_categories_map(mode=2, ip_version=4, suffix='default'):
                              'categories_map_sol_validated_updated_v{}'.format(ip_version))
 
 
-if __name__ == '__main__':
-
-    operation = str(sys.argv[1])
-
-    if operation == 'g':
-        # general
-        # max_links_to_process 和 max_links_to_process_sol_validated 参数限制处理的链接数量，以便进行分块处理和并行计算。
-        mode = int(sys.argv[2])
-        ip_version = int(sys.argv[3])
-        server_id = int(sys.argv[4])
-
-        print(f'Generating cable mapping with mode = {mode}, ip_version = {ip_version} and at server_id = {server_id}')
-
-        categories = ['bg_oc', 'og_oc', 'bb_oc', 'bg_te', 'og_te', 'bb_te']
-
-        max_links_to_process, max_links_to_process_sol_validated = {}, {}
-
-        for count, category in enumerate(categories):
-            max_links_to_process[category] = int(sys.argv[count + 5])
-            max_links_to_process_sol_validated[category] = int(sys.argv[count + 11])
-
-        print(f'max_links_to_process : {max_links_to_process}')
-        print(f'max_links_to_process_sol_validated : {max_links_to_process_sol_validated}')
-
-        cable_mapping, cable_mapping_sol_validated = generate_cable_mapping(max_links_to_process,
-                                                                            max_links_to_process_sol_validated,
-                                                                            server_id, mode, ip_version,
-                                                                            sol_threshold=0.05)
-
-    if operation == 'n':
-        # 普通版本，不用管那么多参数
-        mode = int(sys.argv[2])
-        ip_version = int(sys.argv[3])
-        _, cable_mapping_sol_validated = generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05)
-
-    if operation == 'f':
-        # final mapping
-        generate_final_mapping(mode=1, ip_version=4, threshold=0.05)
-        regenerate_categories_map(mode=1, ip_version=4)
-
-    if operation == 't':
-        # test
-        cable_mapping, cable_mapping_sol_validated = generate_cable_mapping_test(mode=2, ip_version=4,
-                                                                                 sol_threshold=0.05,
-                                                                                 geolocation_threshold=0.6, ignore=True,
-                                                                                 max_links_to_process=None,
-                                                                                 max_links_to_process_sol_validated=None,
-                                                                                 server_id=None)
-        generate_final_mapping_test(cable_mapping, cable_mapping_sol_validated, mode=2, ip_version=4, threshold=0.05)
+# if __name__ == '__main__':
+#
+#     operation = str(sys.argv[1])
+#
+#     if operation == 'g':
+#         # general
+#         # max_links_to_process 和 max_links_to_process_sol_validated 参数限制处理的链接数量，以便进行分块处理和并行计算。
+#         mode = int(sys.argv[2])
+#         ip_version = int(sys.argv[3])
+#         server_id = int(sys.argv[4])
+#
+#         print(f'Generating cable mapping with mode = {mode}, ip_version = {ip_version} and at server_id = {server_id}')
+#
+#         categories = ['bg_oc', 'og_oc', 'bb_oc', 'bg_te', 'og_te', 'bb_te']
+#
+#         max_links_to_process, max_links_to_process_sol_validated = {}, {}
+#
+#         for count, category in enumerate(categories):
+#             max_links_to_process[category] = int(sys.argv[count + 5])
+#             max_links_to_process_sol_validated[category] = int(sys.argv[count + 11])
+#
+#         print(f'max_links_to_process : {max_links_to_process}')
+#         print(f'max_links_to_process_sol_validated : {max_links_to_process_sol_validated}')
+#
+#         cable_mapping, cable_mapping_sol_validated = generate_cable_mapping(max_links_to_process,
+#                                                                             max_links_to_process_sol_validated,
+#                                                                             server_id, mode, ip_version,
+#                                                                             sol_threshold=0.05)
+#
+#     if operation == 'n':
+#         # 普通版本，不用管那么多参数
+#         mode = int(sys.argv[2])
+#         ip_version = int(sys.argv[3])
+#         _, cable_mapping_sol_validated = generate_cable_mapping(mode=mode, ip_version=ip_version, sol_threshold=0.05)
+#
+#     if operation == 'f':
+#         # final mapping
+#         generate_final_mapping(mode=1, ip_version=4, threshold=0.05)
+#         regenerate_categories_map(mode=1, ip_version=4)
+#
+#     if operation == 't':
+#         # test
+#         cable_mapping, cable_mapping_sol_validated = generate_cable_mapping_test(mode=2, ip_version=4,
+#                                                                                  sol_threshold=0.05,
+#                                                                                  geolocation_threshold=0.6, ignore=True,
+#                                                                                  max_links_to_process=None,
+#                                                                                  max_links_to_process_sol_validated=None,
+#                                                                                  server_id=None)
+#         generate_final_mapping_test(cable_mapping, cable_mapping_sol_validated, mode=2, ip_version=4, threshold=0.05)
